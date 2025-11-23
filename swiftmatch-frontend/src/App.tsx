@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import ThemeSelectionPage from './pages/ThemeSelectionPage'; // IMPORTAÇÃO NECESSÁRIA
+import ThemeSelectionPage from './pages/ThemeSelectionPage'; 
+import AlbumRankingPage from './pages/AlbumRankingPage'; 
 
 // Componente temporário de Perfil (Destino após escolher o tema)
 const ProfilePage: React.FC = () => {
@@ -39,6 +40,8 @@ const App: React.FC = () => {
                     
                     {/* Rota Raiz: Redireciona para /login */}
                     <Route path="/" element={<Navigate to="/login" replace />} /> 
+
+                    <Route path="/album-ranking" element={<AlbumRankingPage />} />
 
                     {/* 404 */}
                     <Route path="*" element={<h1>404 - Página Não Encontrada</h1>} />
