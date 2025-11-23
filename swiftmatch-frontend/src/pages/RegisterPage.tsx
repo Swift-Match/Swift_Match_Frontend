@@ -1,26 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api/axiosConfig'; // Usa a instância configurada com VITE_API_URL
+import API from '../api/axiosConfig';
 
 const RegisterPage: React.FC = () => {
-    // 1. Estados que correspondem EXATAMENTE aos campos do Serializer:
     const [username, setUsername] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
-    const [firstName, setFirstName] = useState<string>(''); // Corresponde a 'first_name'
-    const [country, setCountry] = useState<string>('');     // Corresponde a 'country'
+    const [firstName, setFirstName] = useState<string>(''); 
+    const [country, setCountry] = useState<string>('');     
     
-    // Estado para mensagens de erro/sucesso
     const [message, setMessage] = useState<string>('');
-    
     const navigate = useNavigate();
+
+    // Limpa tokens antigos ao abrir a página para evitar conflito (Erro 401)
+    useEffect(() => {
+        localStorage.removeItem('authToken');
+        delete API.defaults.headers.common['Authorization'];
+    }, []);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage('');
 
-        // Payload com os nomes de campo EXATOS do Django Serializer
-        const payload = { 
+        // 1. Garante limpeza de credenciais antigas antes de enviar
+        localStorage.removeItem('authToken');
+        delete API.defaults.headers.common['Authorization'];
+
+        const registrationPayload = { 
             username, 
             email, 
             password, 
@@ -28,41 +34,75 @@ const RegisterPage: React.FC = () => {
             country: country,      
         };
         
-        // CORREÇÃO CRÍTICA: Endpoint CORRETO conforme o Swagger: /api/users/register/
-        const endpoint = '/api/users/register/'; 
+        const registerEndpoint = '/api/users/register/'; 
+        const loginEndpoint = '/api/auth/token/'; // Endpoint correto de login
+
+        let registrationSuccessful = false;
 
         try {
-            await API.post(endpoint, payload);
+            // PASSO 1: Registrar o usuário (Sem token no cabeçalho)
+            await API.post(registerEndpoint, registrationPayload);
+            registrationSuccessful = true;
 
-            // Sucesso
-            setMessage("Registro bem-sucedido! Redirecionando para o Login...");
+            // PASSO 2: Fazer login automático
+            const loginPayload = { username, password }; // Ou email, dependendo do seu backend
+            const loginResponse = await API.post(loginEndpoint, loginPayload);
             
-            setTimeout(() => {
-                navigate('/login'); 
-            }, 2000);
+            const token = loginResponse.data.access || loginResponse.data.auth_token || loginResponse.data.token;
+            
+            if (token) {
+                localStorage.setItem('authToken', token);
+                API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                
+                setMessage("Registro e Login bem-sucedidos! Redirecionando...");
+                
+                // Como é um registro novo, assumimos que é o primeiro login
+                setTimeout(() => {
+                    navigate('/theme-selection'); 
+                }, 2000);
+            } else {
+                // Caso raro: registro funcionou, mas login não retornou token
+                setMessage("Registro concluído! Faça login manualmente.");
+                setTimeout(() => navigate('/login'), 2000);
+            }
 
         } catch (error: any) {
-            console.error("Erro no Registro:", error);
+            console.error("Erro no Fluxo de Registro/Login:", error);
             
-            let errorMessage = "Erro na comunicação com o backend ou dados inválidos.";
-            
-            if (error.response) {
-                const data = error.response.data;
-                // Tratamento de erros detalhado, incluindo os novos campos
-                errorMessage = data.detail || 
-                               data.non_field_errors?.[0] || 
-                               (data.email ? `Email: ${data.email[0]}` : '') ||
-                               (data.username ? `Usuário: ${data.username[0]}` : '') ||
-                               (data.password ? `Senha: ${data.password[0]}` : '') ||
-                               (data.first_name ? `Primeiro Nome: ${data.first_name[0]}` : '') ||
-                               (data.country ? `País: ${data.country[0]}` : '') ||
-                               errorMessage;
-            } else if (error.request) {
-                 // Erro sem resposta (CORS, servidor inativo, ou VITE_API_URL errado)
-                 errorMessage = "Erro de rede. Verifique se o Docker está rodando e se o CORS está configurado no Django.";
+            if (registrationSuccessful) {
+                setMessage("Registro concluído! O login automático falhou. Por favor, faça login manualmente.");
+                setTimeout(() => navigate('/login'), 2000);
+                return;
+            } else {
+                let errorMessage = "Erro na comunicação com o backend ou dados inválidos.";
+                
+                if (error.response) {
+                    const status = error.response.status;
+                    const data = error.response.data;
+                    
+                    // Tratamento específico para 401 no Registro
+                    if (status === 401) {
+                        errorMessage = "Erro de Permissão (401). O navegador enviou credenciais antigas. Tente recarregar a página (F5).";
+                    } else if (typeof data === 'object' && data !== null) {
+                         const fieldErrors = Object.keys(data)
+                             .map(key => {
+                                 const errorArray = Array.isArray(data[key]) ? data[key] : [data[key]];
+                                 return `${key.replace('_', ' ')}: ${errorArray.join(', ')}`;
+                             })
+                             .join('; ');
+                             
+                        errorMessage = data.detail || data.non_field_errors?.[0] || fieldErrors || errorMessage;
+                        
+                        if (errorMessage.includes("already exists")) {
+                             errorMessage = "Usuário: Um usuário com esse nome já existe. Tente outro nome.";
+                        }
+                    }
+                } else if (error.request) {
+                     errorMessage = "Erro de rede. Verifique se o Docker está rodando.";
+                }
+                
+                setMessage(`Falha no Registro: ${errorMessage}`);
             }
-                                 
-            setMessage(errorMessage);
         }
     };
 
@@ -76,7 +116,6 @@ const RegisterPage: React.FC = () => {
             
             <form onSubmit={handleRegister} className="flex flex-col gap-4">
 
-                {/* CAMPO: first_name */}
                 <input 
                     type="text" 
                     placeholder="Primeiro Nome (first_name)" 
@@ -86,7 +125,6 @@ const RegisterPage: React.FC = () => {
                     className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
                 />
 
-                {/* CAMPO: country */}
                 <input 
                     type="text" 
                     placeholder="País (country)" 
@@ -96,7 +134,6 @@ const RegisterPage: React.FC = () => {
                     className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
                 />
                 
-                {/* Campos existentes */}
                 <input 
                     type="text" 
                     placeholder="Nome de Usuário" 
@@ -133,14 +170,12 @@ const RegisterPage: React.FC = () => {
                 </button>
             </form>
             
-            {/* Mensagem de Status */}
             {message && (
-                <p className={`mt-4 text-center text-sm ${message.includes('bem-sucedido') ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`mt-4 text-center text-sm ${message.includes('bem-sucedidos') || message.includes('concluído') ? 'text-green-600' : 'text-red-600'}`}>
                     {message}
                 </p>
             )}
 
-            {/* Link para Login */}
             <div className="mt-6 text-center text-sm">
                 <span className="text-gray-500">
                     Já tem uma conta?
