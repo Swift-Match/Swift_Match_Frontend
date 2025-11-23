@@ -126,10 +126,16 @@ const ThemeSelectionPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    recalc();
+    const timeoutId = setTimeout(() => {
+        recalc();
+    }, 50); // Um pequeno atraso de 50ms é geralmente o suficiente para leituras corretas do DOM
+
     window.addEventListener('resize', recalc);
-    return () => window.removeEventListener('resize', recalc);
-  }, [recalc]);
+    return () => {
+        window.removeEventListener('resize', recalc);
+        clearTimeout(timeoutId); // Limpa o timeout ao desmontar
+    };
+  }, [recalc, themes.length]);
 
   // circular helpers
   const mod = (n: number, m: number) => ((n % m) + m) % m;
