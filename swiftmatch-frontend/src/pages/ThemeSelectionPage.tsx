@@ -153,7 +153,7 @@ const ThemeSelectionPage: React.FC = () => {
     try {
       await API.patch('/api/users/me/theme/', { tema: cur.key });
       localStorage.setItem('userThemeKey', cur.key);
-      navigate('/profile');
+      navigate('/AlbumRankingPage');
     } catch {
       setMessage('Erro ao salvar.');
     }
