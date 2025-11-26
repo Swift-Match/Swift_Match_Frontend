@@ -1,0 +1,381 @@
+// src/pages/RankingSpeakNowPage.tsx
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+// --- CONFIGURAÇÕES DE LAYOUT (MANTIDAS) ---
+const LOVER_ALBUM_ID = 7; // ajuste se necessário
+const API_BASE_URL = 'http://localhost:8000/api';
+
+const COMPONENT_MAX_WIDTH = 800;
+const HEADER_HEIGHT = 80;
+const GAP_PX = 50;
+const ALBUM_SCALE = 1.4;
+
+// Cores do Tema Speak Now
+const LOVER_DARK = '#3D2D34';   // dark
+const LOVER_LIGHT = '#FBB3D1';  // light
+
+
+// Tipagem para as músicas
+interface Track {
+  id: number;
+  title: string;
+  track_number: number;
+  album: number;
+}
+
+// --- Componente de botão customizável ---
+interface ButtonCustomProps {
+  width?: number | string;
+  height?: number | string;
+  borderRadius?: number | string;
+  background?: string;
+  color?: string;
+  fontSize?: number;
+  fontWeight?: number | string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}
+
+const ButtonCustom: React.FC<ButtonCustomProps> = ({
+  width = '50px',
+  height = '50px',
+  borderRadius = 8,
+  background = LOVER_DARK,
+  color = LOVER_LIGHT,
+  fontSize = 16,
+  fontWeight = 700,
+  onClick,
+  children,
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width,
+        height,
+        borderRadius,
+        background,
+        color,
+        fontSize,
+        fontWeight,
+        cursor: 'pointer',
+        border: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        transition: 'transform 0.1s ease',
+      }}
+      onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+      onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+    >
+      {children}
+    </button>
+  );
+};
+
+const LogoSVG: React.FC<{ color?: string; height?: number }> = ({ color = LOVER_LIGHT, height = 40 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 299 75"
+    style={{ height, width: 'auto', display: 'block' }}
+      ><path d="M11.9584 49.6504C8.72287 49.6171 6.08773 48.8999 4.053 47.499C2.01827 46.0647 0.667345 44.1634 0.000221047 41.7951C0.367139 41.1613 0.950873 40.661 1.75142 40.294C2.58533 39.8938 3.3692 39.727 4.10303 39.7937C4.70345 41.5949 5.70413 42.9625 7.10509 43.8965C8.50605 44.8305 10.2072 45.2808 12.2086 45.2474C14.3434 45.2141 16.0612 44.6637 17.3621 43.5963C18.663 42.4955 19.3135 41.0112 19.3135 39.1432C19.3135 36.308 17.8291 34.4734 14.8604 33.6395L8.20585 31.7882C5.87091 31.1211 4.03632 29.987 2.70207 28.3859C1.36783 26.7514 0.700701 24.8168 0.700701 22.5819C0.700701 20.5805 1.20104 18.796 2.20173 17.2282C3.23577 15.6605 4.63673 14.443 6.40461 13.5757C8.20585 12.6751 10.2573 12.2248 12.5588 12.2248C15.1273 12.2248 17.4288 12.7752 19.4636 13.8759C21.5316 14.9433 22.9826 16.361 23.8165 18.1288C23.5163 18.6625 23.016 19.1962 22.3155 19.7299C21.6484 20.2303 20.9146 20.6139 20.114 20.8807C18.4796 18.0454 15.9111 16.6278 12.4087 16.6278C10.3406 16.6278 8.65615 17.1615 7.35526 18.2289C6.05437 19.2629 5.40393 20.6139 5.40393 22.2817C5.40393 24.9502 7.12177 26.7681 10.5575 27.7354L16.4615 29.3365C18.8298 29.9703 20.6811 31.1544 22.0153 32.889C23.3496 34.5901 24.0167 36.6582 24.0167 39.0932C24.0167 41.228 23.483 43.096 22.4156 44.6971C21.3815 46.2981 19.9472 47.5323 18.1126 48.3996C16.3114 49.2335 14.26 49.6504 11.9584 49.6504ZM31.0207 35.7909C30.2869 35.6242 29.6031 35.3406 28.9693 34.9404C28.3355 34.5401 27.8018 33.9897 27.3682 33.2892L29.0694 30.7375C30.6705 28.3692 32.1048 26.7681 33.3723 25.9342C34.6732 25.1003 36.0742 24.6833 37.5752 24.6833C39.5432 24.6833 41.0943 25.3838 42.2284 26.7848C43.3959 28.1524 43.9796 29.9536 43.9796 32.1885V38.2927C43.9796 40.7277 44.2798 42.5289 44.8802 43.6964C45.514 44.8305 46.4813 45.3975 47.7822 45.3975C49.45 45.3975 50.6842 44.4969 51.4847 42.6957C52.2853 40.8944 52.6856 38.4428 52.6856 35.3406V32.3386C52.9858 32.2385 53.3193 32.1551 53.6862 32.0884C54.0865 32.0217 54.4868 31.9883 54.8871 31.9883C55.721 31.9883 56.4715 32.1051 57.1386 32.3386V35.3406C57.1386 38.843 57.4722 41.3948 58.1393 42.9959C58.8398 44.597 59.8905 45.3975 61.2915 45.3975C62.4256 45.3975 63.3595 44.8972 64.0934 43.8965C64.8272 42.8625 65.3776 41.4615 65.7445 39.6936C66.1114 37.8924 66.2949 35.8243 66.2949 33.4894C66.2949 33.2892 66.2949 33.0891 66.2949 32.889C64.6604 32.2885 63.4596 31.488 62.6924 30.4873C62.8258 29.4866 63.1094 28.5526 63.543 27.6854C64.01 26.7848 64.577 26.0676 65.2442 25.5339C65.9113 24.9669 66.5784 24.6833 67.2455 24.6833C68.3129 24.6833 69.1802 25.4839 69.8473 27.085C70.5144 28.6861 70.848 30.7542 70.848 33.2892C70.848 36.5248 70.4811 39.3767 69.7473 41.8451C69.0134 44.3135 67.9127 46.2481 66.445 47.6491C65.0107 49.0167 63.2428 49.7005 61.1414 49.7005C59.7737 49.7005 58.5396 49.3502 57.4388 48.6498C56.3381 47.9493 55.4541 46.9486 54.787 45.6477C53.9864 46.9152 52.9524 47.9159 51.6849 48.6498C50.4173 49.3502 48.9997 49.7005 47.432 49.7005C44.8969 49.7005 42.9289 48.7498 41.5279 46.8485C40.1269 44.9472 39.4265 42.2787 39.4265 38.843V33.0391C39.4265 31.7715 39.243 30.7875 38.8761 30.087C38.5425 29.3532 37.9755 28.9863 37.1749 28.9863C36.6746 28.9863 36.1075 29.2198 35.4738 29.6868C34.8733 30.1204 34.0561 31.1378 33.0221 32.7389L31.0207 35.7909ZM85.7109 49.7005C80.8743 49.7005 78.456 46.7318 78.456 40.7944V31.2378C77.4219 31.8049 76.2378 32.2552 74.9035 32.5887C73.6026 32.9223 72.2183 33.0891 70.7507 33.0891C69.1162 33.0891 67.6986 32.8723 66.4978 32.4386C65.5971 32.1384 65.1468 31.5547 65.1468 30.6874C65.1468 30.0537 65.3303 29.52 65.6972 29.0863C66.0308 28.6527 66.431 28.4359 66.898 28.4359C67.0315 28.4359 67.1482 28.4526 67.2483 28.4859C67.3483 28.4859 67.4484 28.5026 67.5485 28.536C68.1155 28.6694 68.6826 28.7861 69.2496 28.8862C69.8167 28.9529 70.4004 28.9863 71.0008 28.9863C72.702 28.9863 74.3198 28.6027 75.8542 27.8355C77.4219 27.0349 78.506 26.0676 79.1064 24.9335C79.8069 24.8668 80.524 24.9502 81.2579 25.1837C81.9917 25.4172 82.5754 25.8174 83.0091 26.3845V40.244C83.0091 42.0786 83.2426 43.3962 83.7096 44.1967C84.2099 44.9973 84.9938 45.3975 86.0612 45.3975C86.5282 45.3975 86.8784 45.5977 87.1119 45.9979C87.3787 46.3982 87.5122 46.9319 87.5122 47.599C87.5122 48.1327 87.3621 48.6164 87.0619 49.05C86.795 49.4837 86.3447 49.7005 85.7109 49.7005ZM81.0077 18.1789C80.0737 18.1789 79.2732 17.8453 78.6061 17.1782C77.9389 16.5111 77.6054 15.7105 77.6054 14.7765C77.6054 13.7759 77.9223 12.9586 78.556 12.3249C79.2231 11.6911 80.0404 11.3742 81.0077 11.3742C82.0084 11.3742 82.8256 11.6911 83.4594 12.3249C84.0932 12.9586 84.41 13.7759 84.41 14.7765C84.41 15.7439 84.0765 16.5611 83.4093 17.2282C82.7756 17.862 81.975 18.1789 81.0077 18.1789ZM101.141 74.7176C98.3395 74.7176 96.3215 73.6836 95.0873 71.6155C93.8531 69.5474 93.236 66.6955 93.236 63.0596V46.4483C92.1019 47.6157 90.9344 48.4496 89.7336 48.95C88.5661 49.4503 87.2486 49.7005 85.7809 49.7005C85.3473 49.7005 84.997 49.5003 84.7302 49.1001C84.4633 48.6998 84.3299 48.1828 84.3299 47.549C84.3299 46.8819 84.4967 46.3649 84.8302 45.9979C85.1304 45.5977 85.5474 45.3975 86.0811 45.3975C87.2486 45.3975 88.3994 45.0139 89.5335 44.2467C90.6676 43.4462 91.9018 42.1787 93.236 40.4441V11.4743C93.236 9.67304 93.3694 8.03859 93.6363 6.57091C93.9365 5.06988 94.4535 3.78567 95.1873 2.71827C95.7878 1.81766 96.5549 1.08382 97.4889 0.516763C98.4563 -0.0502928 99.6571 -0.333821 101.091 -0.333821C103.693 -0.333821 105.695 0.833646 107.096 3.16858C108.496 5.50352 109.197 8.80578 109.197 13.0754C109.197 23.249 106.078 32.0884 99.8405 39.5936C102.042 40.3274 103.927 41.8951 105.494 44.2968C106.629 45.0306 107.796 45.3975 108.997 45.3975C109.43 45.3975 109.781 45.5977 110.048 45.9979C110.314 46.3982 110.448 46.9319 110.448 47.599C110.448 48.2328 110.281 48.7332 109.947 49.1001C109.647 49.5003 109.214 49.7005 108.647 49.7005C108.413 49.7005 108.196 49.7005 107.996 49.7005C108.53 51.3683 108.93 53.1862 109.197 55.1542C109.497 57.1556 109.647 59.257 109.647 61.4585C109.647 65.8282 108.913 69.1305 107.446 71.3653C106.011 73.6002 103.91 74.7176 101.141 74.7176ZM97.6891 10.4236V35.3907C99.9573 32.2885 101.692 28.8195 102.893 24.9835C104.127 21.1142 104.744 17.1282 104.744 13.0253C104.744 10.0233 104.427 7.73838 103.793 6.17064C103.193 4.6029 102.292 3.81903 101.091 3.81903C98.8232 3.81903 97.6891 6.02054 97.6891 10.4236ZM97.6891 63.0596C97.6891 65.5614 97.9726 67.446 98.5396 68.7135C99.1067 69.981 100.057 70.6148 101.392 70.6148C102.626 70.6148 103.576 69.7976 104.244 68.1631C104.911 66.562 105.244 64.2104 105.244 61.1083C105.244 55.838 104.527 51.6018 103.093 48.3996C101.992 47.9326 100.958 47.3822 99.9906 46.7485C99.0567 46.1147 98.2895 45.4476 97.6891 44.7471V63.0596ZM108.997 45.3975C109.831 45.3975 110.782 45.1474 111.849 44.647C112.95 44.1467 114.017 43.2961 115.051 42.0953C116.085 40.8944 116.936 39.2767 117.603 37.2419C118.27 35.1739 118.604 32.5887 118.604 29.4866V24.6833H114.901C114.668 24.1496 114.551 23.4825 114.551 22.682C114.551 21.8814 114.668 21.2143 114.901 20.6806H118.604V11.8245C119.238 11.591 120.005 11.4743 120.905 11.4743C121.706 11.4743 122.473 11.591 123.207 11.8245V20.6806H130.662C130.929 21.2143 131.062 21.8814 131.062 22.682C131.062 23.4825 130.929 24.1496 130.662 24.6833H123.207V40.3941C123.207 41.1946 123.274 41.9785 123.407 42.7457C123.574 43.5129 123.874 44.1634 124.308 44.6971C124.741 45.1974 125.408 45.4476 126.309 45.4476C127.21 45.4476 128.01 45.2141 128.711 44.7471C129.445 44.2467 130.062 43.7631 130.562 43.2961C131.096 43.6964 131.579 44.1967 132.013 44.7971C132.447 45.3975 132.713 45.9979 132.814 46.5984C132.513 46.9653 132.046 47.3989 131.413 47.8992C130.779 48.3662 130.012 48.7832 129.111 49.1501C128.21 49.517 127.193 49.7005 126.059 49.7005C124.058 49.7005 122.506 49.1501 121.406 48.0493C120.338 46.9486 119.638 45.5143 119.304 43.7464C117.903 45.7811 116.252 47.2822 114.351 48.2495C112.483 49.2168 110.582 49.7005 108.647 49.7005C108.213 49.7005 107.863 49.4837 107.596 49.05C107.329 48.6498 107.196 48.1494 107.196 47.549C107.196 46.9152 107.346 46.3982 107.646 45.9979C107.946 45.5977 108.397 45.3975 108.997 45.3975ZM155.784 49.3502C154.95 49.3502 154.182 49.2335 153.482 49V12.8752C153.882 12.7085 154.283 12.6084 154.683 12.575C155.083 12.5417 155.417 12.525 155.684 12.525C156.05 12.525 156.434 12.5417 156.834 12.575C157.268 12.6084 157.685 12.7085 158.085 12.8752L170.344 37.1419L182.552 12.8752C182.986 12.7085 183.386 12.6084 183.753 12.575C184.12 12.5417 184.437 12.525 184.703 12.525C185.07 12.525 185.471 12.5417 185.904 12.575C186.338 12.6084 186.738 12.7085 187.105 12.8752V49C186.304 49.2335 185.521 49.3502 184.753 49.3502C183.92 49.3502 183.152 49.2335 182.452 49V22.8821L172.395 42.8458C171.828 43.0793 171.144 43.196 170.344 43.196C169.543 43.196 168.843 43.0793 168.242 42.8458L158.135 22.8321V49C157.335 49.2335 156.551 49.3502 155.784 49.3502ZM204.42 49.7005C202.319 49.7005 200.468 49.2001 198.867 48.1995C197.299 47.1988 196.065 45.7978 195.164 43.9966C194.297 42.1953 193.863 40.1273 193.863 37.7923C193.863 35.2572 194.364 33.0057 195.364 31.0377C196.365 29.0697 197.716 27.5186 199.417 26.3845C201.152 25.2504 203.12 24.6833 205.321 24.6833C206.489 24.6833 207.639 24.9168 208.773 25.3838C209.908 25.8174 210.858 26.4179 211.625 27.185V25.1336C211.926 25.0336 212.276 24.9502 212.676 24.8835C213.076 24.8168 213.493 24.7834 213.927 24.7834C214.728 24.7834 215.478 24.9001 216.178 25.1336V40.244C216.178 42.0786 216.412 43.3962 216.879 44.1967C217.379 44.9973 218.163 45.3975 219.231 45.3975C219.698 45.3975 220.048 45.5977 220.281 45.9979C220.548 46.3982 220.682 46.9319 220.682 47.599C220.682 48.1327 220.531 48.6164 220.231 49.05C219.964 49.4837 219.514 49.7005 218.88 49.7005C215.712 49.7005 213.577 48.3996 212.476 45.7978C211.509 47.032 210.341 47.9993 208.974 48.6998C207.606 49.3669 206.088 49.7005 204.42 49.7005ZM198.516 37.7923C198.516 40.1606 199.05 42.0286 200.117 43.3962C201.218 44.7304 202.719 45.3975 204.621 45.3975C206.722 45.3975 208.407 44.6804 209.674 43.2461C210.975 41.8117 211.625 39.9271 211.625 37.5922V31.9883C210.958 31.0877 210.108 30.3706 209.074 29.8369C208.04 29.2698 206.972 28.9863 205.871 28.9863C204.437 28.9863 203.17 29.3699 202.069 30.1371C200.968 30.9043 200.101 31.955 199.467 33.2892C198.833 34.5901 198.516 36.0912 198.516 37.7923ZM219.229 45.3975C220.063 45.3975 221.014 45.1474 222.081 44.647C223.182 44.1467 224.249 43.2961 225.283 42.0953C226.317 40.8944 227.168 39.2767 227.835 37.2419C228.502 35.1739 228.836 32.5887 228.836 29.4866V24.6833H225.133C224.9 24.1496 224.783 23.4825 224.783 22.682C224.783 21.8814 224.9 21.2143 225.133 20.6806H228.836V11.8245C229.469 11.591 230.237 11.4743 231.137 11.4743C231.938 11.4743 232.705 11.591 233.439 11.8245V20.6806H240.894C241.161 21.2143 241.294 21.8814 241.294 22.682C241.294 23.4825 241.161 24.1496 240.894 24.6833H233.439V35.0404C233.439 38.3761 233.939 40.9445 234.94 42.7457C235.974 44.5136 237.425 45.3975 239.293 45.3975C240.26 45.3975 240.744 46.1314 240.744 47.599C240.744 48.2328 240.577 48.7332 240.243 49.1001C239.943 49.5003 239.51 49.7005 238.943 49.7005C236.774 49.7005 234.94 49.0834 233.439 47.8492C231.971 46.615 230.887 44.8972 230.187 42.6957C228.786 45.0973 227.068 46.8652 225.033 47.9993C222.998 49.1334 220.947 49.7005 218.879 49.7005C218.445 49.7005 218.095 49.4837 217.828 49.05C217.561 48.6498 217.428 48.1494 217.428 47.549C217.428 46.9152 217.578 46.3982 217.878 45.9979C218.178 45.5977 218.629 45.3975 219.229 45.3975ZM239.311 45.3975C240.379 45.3975 241.429 44.8805 242.463 43.8465C243.531 42.8124 244.448 41.4115 245.215 39.6436C245.082 38.8764 245.015 38.0925 245.015 37.292C245.015 34.8236 245.482 32.6555 246.416 30.7875C247.35 28.8862 248.634 27.4019 250.269 26.3345C251.936 25.2337 253.838 24.6833 255.973 24.6833C257.574 24.6833 259.025 25.0002 260.326 25.634C261.66 26.2344 262.744 27.1183 263.578 28.2858C263.178 29.6534 262.21 30.6374 260.676 31.2378C259.575 29.7368 258.057 28.9863 256.123 28.9863C254.188 28.9863 252.62 29.7201 251.419 31.1878C250.252 32.6221 249.668 34.5734 249.668 37.0418C249.668 39.5769 250.402 41.6116 251.87 43.146C253.371 44.6804 255.489 45.4476 258.224 45.4476C258.658 45.4476 259.008 45.6644 259.275 46.098C259.575 46.4983 259.725 47.0153 259.725 47.6491C259.725 48.2828 259.558 48.7832 259.225 49.1501C258.925 49.517 258.491 49.7005 257.924 49.7005C255.556 49.7005 253.454 49.2668 251.62 48.3996C249.785 47.5323 248.317 46.3148 247.217 44.7471C245.148 48.0493 242.397 49.7005 238.961 49.7005C238.527 49.7005 238.177 49.5003 237.91 49.1001C237.643 48.6998 237.51 48.1828 237.51 47.549C237.51 46.1147 238.11 45.3975 239.311 45.3975ZM257.951 49.7005C257.517 49.7005 257.167 49.5003 256.9 49.1001C256.6 48.6998 256.45 48.1828 256.45 47.549C256.45 46.148 257.067 45.4476 258.301 45.4476C260.703 45.4476 262.904 44.6137 264.906 42.9458C266.907 41.2447 268.692 38.8264 270.259 35.6909V10.0233C270.259 6.68766 270.96 4.11923 272.361 2.318C273.795 0.516763 275.863 -0.367177 278.565 -0.333821C281.033 -0.300465 282.951 0.633508 284.319 2.4681C285.72 4.30269 286.42 6.68766 286.42 9.623C286.42 14.493 284.953 19.9134 282.017 25.8842C282.251 25.8508 282.484 25.8341 282.718 25.8341C285.22 25.8341 287.204 26.7181 288.672 28.4859C290.173 30.2538 290.923 32.6221 290.923 35.5908V39.8938C290.923 41.8284 291.157 43.2294 291.624 44.0966C292.124 44.9639 292.942 45.3975 294.076 45.3975C294.443 45.3975 294.843 45.3141 295.276 45.1474C295.71 44.9806 296.16 44.7304 296.627 44.3968C297.194 44.6637 297.661 45.1307 298.028 45.7978C298.395 46.4316 298.562 47.0653 298.529 47.6991C297.995 48.2995 297.311 48.7832 296.477 49.1501C295.643 49.517 294.743 49.7005 293.775 49.7005C291.374 49.7005 289.523 48.9333 288.222 47.3989C286.954 45.8312 286.32 43.6297 286.32 40.7944V35.4907C286.32 33.7896 285.937 32.472 285.17 31.538C284.436 30.5707 283.385 30.087 282.017 30.087C280.683 30.087 279.482 30.5373 278.415 31.438C277.348 32.3052 276.497 33.506 275.863 35.0404C275.229 36.5748 274.896 38.3427 274.862 40.3441V49C274.529 49.1001 274.162 49.1835 273.762 49.2502C273.361 49.3169 272.978 49.3502 272.611 49.3502C271.844 49.3502 271.06 49.2335 270.259 49V43.3962C268.625 45.531 266.74 47.1154 264.605 48.1494C262.471 49.1835 260.252 49.7005 257.951 49.7005ZM274.712 9.97325V29.6868C277.047 26.151 278.832 22.6486 280.066 19.1796C281.334 15.7105 281.967 12.5083 281.967 9.57297C281.967 7.70502 281.65 6.28739 281.017 5.32006C280.416 4.31937 279.532 3.81903 278.365 3.81903C275.93 3.81903 274.712 5.87043 274.712 9.97325Z" fill={color}/>
+    </svg>
+);
+
+
+const RankingLoverPage: React.FC = () => {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // refs para drag
+  const dragItemIndex = useRef<number | null>(null);
+  const dragOverItemIndex = useRef<number | null>(null);
+
+  // busca as faixas
+  const fetchTracks = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      setError('Usuário não autenticado. Por favor, faça login.');
+      setIsLoading(false);
+      return;
+    }
+
+    const url = `${API_BASE_URL}/tracks/album/${LOVER_ALBUM_ID}/`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) throw new Error('Álbum não encontrado ou endpoint inválido.');
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.detail || `Falha ao buscar músicas: ${response.status}`);
+      }
+
+      const data: Track[] = await response.json();
+      data.sort((a, b) => (a.track_number ?? 0) - (b.track_number ?? 0));
+      setTracks(data);
+    } catch (err: any) {
+      console.error('Erro ao buscar faixas:', err);
+      setError(err?.message || 'Erro desconhecido ao carregar as músicas.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTracks();
+  }, [fetchTracks]);
+
+  // reorder quando soltar
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = dragItemIndex.current;
+    const to = dragOverItemIndex.current;
+    if (from === null || to === null) return;
+    if (from === to) {
+      dragItemIndex.current = null;
+      dragOverItemIndex.current = null;
+      return;
+    }
+
+    setTracks((prev) => {
+      const copy = [...prev];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+
+    dragItemIndex.current = null;
+    dragOverItemIndex.current = null;
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    dragItemIndex.current = index;
+    const crt = document.createElement('div');
+    crt.style.width = '0px';
+    crt.style.height = '0px';
+    // @ts-ignore
+    e.dataTransfer.setDragImage(crt, 0, 0);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    dragOverItemIndex.current = index;
+  };
+
+  const handleDragEnd = (_e: React.DragEvent) => {
+    dragItemIndex.current = null;
+    dragOverItemIndex.current = null;
+  };
+
+  // salvar ranking
+  const handleSaveRanking = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        console.error('Usuário não autenticado.');
+        setError('Usuário não autenticado. Por favor, faça login.');
+        return;
+    }
+
+    // 1. Mapeia o estado atual (tracks) para o formato esperado pelo Serializer
+    const rankingsPayload = tracks.map((track, index) => ({
+        track_id: track.id,
+        position: index + 1,
+    }));
+    
+    const payload = {
+        album_id: LOVER_ALBUM_ID,
+        rankings: rankingsPayload
+    };
+
+    const url = `${API_BASE_URL}/rankings/tracks/${LOVER_ALBUM_ID}/`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json', 
+                Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            const errorMessage = errorBody.errors ? JSON.stringify(errorBody.errors) : (errorBody.detail || `Falha ao salvar ranking: ${response.status}`);
+            throw new Error(errorMessage);
+        }
+        
+        console.log('Ranking salvo com sucesso!', rankingsPayload);
+        
+        navigate('/catalog'); // <-- CHAMADA PARA REDIRECIONAR
+        
+    } catch (err: any) {
+        console.error('Erro ao salvar ranking:', err.message);
+        setError(`Falha ao salvar ranking: ${err.message}`);
+    }
+};
+
+  // layout vars
+  const wrapperBg = LOVER_LIGHT;
+  const fadeWidth = 120;
+  const indicatorHeight = 120;
+  const extraVertical = Math.round((indicatorHeight * (ALBUM_SCALE - 1)) + 16);
+  const rowShift = -(indicatorHeight + GAP_PX);
+
+  const renderTrackList = () => {
+    if (isLoading) {
+      return <div style={{ textAlign: 'center', padding: 40, color: LOVER_DARK }}>Carregando a lista de músicas do Speak Now...</div>;
+    }
+
+    if (error) {
+      return <div style={{ textAlign: 'center', padding: 40, color: LOVER_DARK, fontWeight: 'bold' }}>Erro: {error}</div>;
+    }
+
+    if (tracks.length === 0) {
+      return <div style={{ textAlign: 'center', padding: 40, color: LOVER_DARK }}>Nenhuma música encontrada para este álbum.</div>;
+    }
+
+    return (
+      <>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',  gap: 8, justifyContent: 'start' }}>
+          {tracks.map((track, index) => {
+            const isDragging = dragItemIndex.current === index;
+            return (
+              <li key={track.id} style={{ margin: 0 }}>
+                <button
+                  type="button"
+                  draggable
+                  aria-grabbed={isDragging}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    width: '120px',
+                    height: '160px',
+                    position: 'relative', // <<< importante
+                    display: 'flex',
+                    alignItems: 'flex-start', // alinha o conteúdo no topo
+                    justifyContent: 'space-between',
+                    padding: '10px',
+                    borderRadius: 10,
+                    border: `1px solid ${LOVER_DARK}30`,
+                    background: LOVER_DARK,
+                    color: LOVER_DARK,
+                    cursor: 'grab',
+                    textAlign: 'left',
+                    boxShadow: isDragging ? '0 4px 12px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)',
+                    transition: 'all 0.2s ease-in-out',
+                  }}
+                >
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: 130, 
+                    left: 80, 
+                    width: 23, 
+                    height: 23, 
+                    borderRadius: 6, 
+                    background: LOVER_DARK, 
+                    color: LOVER_LIGHT, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontSize: 14, 
+                    fontWeight: 900 
+                  }}>
+                    #{index + 1}
+                  </div>
+
+                    {/* Conteúdo do título e track_number */}
+                    <div style={{
+                      fontSize: 16,
+                      color: LOVER_LIGHT,
+                      fontWeight: 600,
+                      marginTop: 10,    // afasta do topo
+                      marginLeft: 0, 
+                      wordBreak: 'break-word',
+                      whiteSpace: 'normal'
+                    }}>
+                      {track.title}
+                    </div>
+
+
+                </button>
+
+                {dragOverItemIndex.current === index && dragItemIndex.current !== index && (
+                  <div style={{ height: 11, background: LOVER_DARK, borderRadius: 2, margin: '4px 0', opacity: 0.5, transition: 'all 0.2s' }} />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </>
+    );
+  };
+
+  return (
+    <div style={{ width: '100vw', minHeight: '100vh', background: wrapperBg, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 80, fontFamily: '"Inter", sans-serif' }}>
+      <header
+        style={{
+          width: '100%',
+          height: HEADER_HEIGHT,
+          background: LOVER_DARK,
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: '5%',
+          justifyContent: 'flex-start',
+          position: 'fixed',
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        <LogoSVG color={LOVER_LIGHT} height={40} />
+      </header>
+
+      <div style={{ height: 120, width: '100%' }} />
+
+      <h1 style={{ color: LOVER_DARK, fontSize: 40, fontWeight: 800, marginBottom: 12 }}>
+        Lover Ranking
+      </h1>
+
+      <p style={{ color: LOVER_DARK, marginBottom: 40, fontSize: 18, textAlign: 'center' }}>
+        Drag and drop the songs to create your ultimate ranking!
+      </p>
+
+      <div style={{ width: '100%', margin: '8px auto', padding: '0 20px', boxSizing: 'border-box' }}>
+        {renderTrackList()}
+      </div>
+
+      {/* Botão Salvar Ranking */}
+      <div style={{ width: '100%', margin: '8px auto 56px', display: 'flex', justifyContent: 'flex-end', padding: '0 20px', boxSizing: 'border-box', position: 'relative' }}>
+        <ButtonCustom
+          width={220}       // largura livre
+          height={60}       // altura livre
+          borderRadius={30} // arredondamento livre
+          onClick={handleSaveRanking}
+        >
+          Save Ranking
+        </ButtonCustom>
+      </div>
+    </div>
+  );
+};
+
+export default RankingLoverPage;
