@@ -5,20 +5,24 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ThemeSelectionPage from './pages/ThemeSelectionPage'; 
 import AlbumRankingPage from './pages/AlbumRankingPage'; 
-
-// Componente temporário de Perfil (Destino após escolher o tema)
-const ProfilePage: React.FC = () => {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="p-8 text-center max-w-md w-full rounded-xl shadow-lg bg-white">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Página de Perfil</h1>
-                <p className="text-gray-600 mt-2">Você foi registrado e o próximo passo seria ver seu perfil com o tema escolhido.</p>
-                <p className="mt-4 text-sm text-pink-500 font-medium">Esta tela deve herdar a paleta de cores escolhida!</p>
-            </div>
-        </div>
-    );
-};
-
+import CatalogPage from './pages/CatalogPage';
+import ProfilePage from './pages/ProfilePage'
+import UpdatesPage from './pages/UpdatesPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import IndividualProfilePage from './pages/IndividualProfilePage';
+import RankingSpeakNowPage from './pages/RankingSpeakNowPage';
+import RankingFearlessPage from './pages/RankingFearlessPage';
+import RankingRepPage from './pages/RankingRepPage';
+import RankingTSPage from './pages/RankingTSPage';
+import Ranking1989Page from './pages/Ranking1989Page';
+import RankingFolklorePage from './pages/RankingFolklorePage';
+import RankingEvermorePage from './pages/RankingEvermorePage';
+import RankingLoverPage from './pages/RankingLoverPage';
+import RankingShowgirlPage from './pages/RankingShowgirlPage';
+import RankingRedPage from './pages/RankingRedPage';
+import RankingMidnightsPage from './pages/RankingMidnightsPage';
+import RankingTTPDPage from './pages/RankingTTPDPages';
+import MatchingPage from './pages/MatchingPage';
 
 const App: React.FC = () => {
     return (
@@ -35,13 +39,46 @@ const App: React.FC = () => {
                     {/* *** ROTA ADICIONADA: Seleção de Tema *** */}
                     <Route path="/theme-selection" element={<ThemeSelectionPage />} />
                     
-                    {/* *** ROTA ADICIONADA: Perfil *** */}
-                    <Route path="/profile" element={<ProfilePage />} />
-                    
                     {/* Rota Raiz: Redireciona para /login */}
                     <Route path="/" element={<Navigate to="/login" replace />} /> 
 
                     <Route path="/album-ranking" element={<AlbumRankingPage />} />
+
+                    <Route path="/catalog" element={<CatalogPage />} />
+
+                    <Route path="/profile/:userId" element={<ProfilePage />} />
+
+                    <Route path="/updates" element={<UpdatesPage />} />
+
+                    <Route path="/analytics" element={<AnalyticsPage />} />
+
+                    <Route path="/my-profile" element={<IndividualProfilePage />} />
+
+                    <Route path="/speak-now" element={<RankingSpeakNowPage />} />
+
+                    <Route path="/fearless" element={<RankingFearlessPage />} />
+
+                    <Route path="/reputation" element={<RankingRepPage />} />
+    
+                    <Route path="/taylor-swift" element={<RankingTSPage />} />
+
+                    <Route path="/1989" element={<Ranking1989Page />} />
+
+                    <Route path="/folklore" element={<RankingFolklorePage />} />
+
+                    <Route path="/evermore" element={<RankingEvermorePage />} />
+
+                    <Route path="/lover" element={<RankingLoverPage />} />
+
+                    <Route path="/showgirl" element={<RankingShowgirlPage />} />
+
+                    <Route path="/red" element={<RankingRedPage />} />
+
+                    <Route path="/midnights" element={<RankingMidnightsPage />} />
+
+                    <Route path="/ttpd" element={<RankingTTPDPage />} />
+
+                    <Route path="/matching" element={<MatchingPage />} />
 
                     {/* 404 */}
                     <Route path="*" element={<h1>404 - Página Não Encontrada</h1>} />
