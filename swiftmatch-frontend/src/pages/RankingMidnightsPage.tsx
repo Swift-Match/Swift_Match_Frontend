@@ -1,4 +1,3 @@
-// src/pages/RankingSpeakNowPage.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
