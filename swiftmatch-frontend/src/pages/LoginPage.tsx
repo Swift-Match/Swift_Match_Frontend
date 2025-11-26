@@ -18,71 +18,52 @@ const LoginPage: React.FC = () => {
         const firstLoginCheckEndpoint = '/api/users/me/first-login/'; 
 
         try {
-            // PASSO 1: Autenticar e obter o Token
             const loginResponse = await API.post(loginEndpoint, loginPayload);
-            
             const token = loginResponse.data.access || loginResponse.data.auth_token || loginResponse.data.token;
             
             if (!token) {
-                 setMessage("Sucesso no login, mas nenhum token recebido. Verifique o backend.");
-                 return;
+                setMessage("Success on login, but no token received. Check backend.");
+                return;
             }
 
-            // Configurar o token para todas as requisições futuras
             localStorage.setItem('authToken', token);
             API.defaults.headers.common['Authorization'] = `Bearer ${token}`; 
             
-            setMessage("Login bem-sucedido. Verificando estado inicial...");
-
-            // PASSO 2: Verificar o estado 'first_login'
             const firstLoginResponse = await API.get(firstLoginCheckEndpoint);
-            
-            // 🚨 LOG DE DEBUG: VERIFIQUE ESTE VALOR NO CONSOLE DO NAVEGADOR!
-            console.log("Resposta do /first-login/:", firstLoginResponse.data);
+            const isFirstLogin = firstLoginResponse.data.first_login;
 
-            // Espera-se que a resposta seja: { "first_login": true/false }
-            // Se o backend enviar "false", ou não enviar nada, cai para false.
-            const isFirstLogin = firstLoginResponse.data.first_login === null;
-            
-            console.log("isFirstLogin avaliado como:", isFirstLogin);
-
-
-            let redirectPath = '/profile';
+            let redirectPath = '/catalog';
             if (isFirstLogin) {
                 redirectPath = '/theme-selection';
-                setMessage("Bem-vindo(a)! Escolha seu tema...");
+                setMessage("Welcome! It's time to choose your theme...");
             } else {
-                setMessage("Redirecionando para o perfil...");
+                setMessage("Just a moment...");
             }
             
-            setTimeout(() => {
-                navigate(redirectPath); 
-            }, 1500);
+            setTimeout(() => navigate(redirectPath), 1500);
 
         } catch (error: any) {
-            console.error("Erro durante o Login ou Verificação:", error);
-            
-            let errorMessage = "Erro na comunicação ou credenciais inválidas.";
+            let errorMessage = "Communication error or invalid credentials.";
             
             if (error.response) {
                 const status = error.response.status;
                 const data = error.response.data;
 
                 if (status === 401) {
-                    errorMessage = `Acesso Negado (401). Verifique se o token é Bearer ou se está expirado.`;
+                    errorMessage = `Access denied (401). Check if your token is Bearer or expired.`;
                 } else if (status === 404) {
-                     errorMessage = `Erro 404: Verifique se a rota ${loginEndpoint} ou ${firstLoginCheckEndpoint} está correta no seu Django.`;
+                    errorMessage = `Error 404: Check if the route is correct in Django.`;
                 } else if (status === 400) {
-                     if (data.non_field_errors) {
-                         errorMessage = `Erro de Credenciais: ${data.non_field_errors[0]}`;
-                     } else {
-                         errorMessage = "Credenciais inválidas. Verifique seu nome de usuário e senha.";
-                     }
+                    if (data.non_field_errors) {
+                        errorMessage = `Credentials error: ${data.non_field_errors[0]}`;
+                    } else {
+                        errorMessage = "Invalid credentials.";
+                    }
                 } else if (data.detail) {
                     errorMessage = data.detail;
                 }
             } else if (error.request) {
-                 errorMessage = "Erro de rede. Verifique se o Docker está rodando.";
+                errorMessage = "Network error.";
             }
             
             setMessage(errorMessage);
@@ -90,64 +71,147 @@ const LoginPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="bg-white p-8 md:p-10 rounded-xl shadow-2xl max-w-sm w-full" 
-                 style={{ fontFamily: 'Inter, sans-serif' }}>
-                
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                    Acesse sua conta
-                </h2>
-                
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <div style={{ minHeight: '100vh', backgroundColor: '#ffffff', display: 'flex', alignItems: 'stretch', width: '100vw', position: 'relative' }}>
 
-                    <input 
-                        type="text" 
-                        placeholder="Nome de Usuário" 
-                        value={username} 
-                        onChange={(e) => setUsername(e.target.value)} 
-                        required 
-                        className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                    />
-                    
-                    <input 
-                        type="password" 
-                        placeholder="Senha" 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        required 
-                        className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                    />
-                    
-                    <button 
-                        type="submit" 
-                        className="p-3 text-white font-semibold rounded-lg transition duration-150 
-                                   bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300"
-                    >
-                        Entrar
-                    </button>
-                </form>
-                
-                {/* Mensagem de Status */}
-                {message && (
-                    <p className={`mt-4 text-center text-sm ${message.includes('bem-sucedido') ? 'text-green-600' : 'text-red-600'}`}>
-                        {message}
-                    </p>
-                )}
+            {/* LOGO */}
+            <img
+                src="/Components/ThemeSwiftMatch.svg"
+                alt="SwiftMatch Logo"
+                style={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    height: 50,
+                    objectFit: 'contain',
+                }}
+            />
 
-                {/* Link para Cadastro */}
-                <div className="mt-6 text-center text-sm">
-                    <span className="text-gray-500">
-                        Não tem uma conta?
-                    </span>
-                    <button 
-                        type="button" 
-                        onClick={() => navigate('/register')} 
-                        className="ml-2 font-medium text-pink-600 hover:text-pink-700 bg-transparent p-0 border-none"
-                    >
-                        Cadastre-se
-                    </button>
-                </div>
+          <div style={{
+            width: '460px',
+            maxWidth: '46%',
+            minWidth: 320,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 32,
+            boxSizing: 'border-box'
+          }}>
+            <div style={{
+              width: '100%',
+              background: '#ffffff',
+              borderRadius: 16,
+              boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+              padding: '36px 28px',
+              fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+            }}>
+              <h2 style={{ margin: 0, marginBottom: 12, fontSize: 24, fontWeight: 700, color: '#111827', textAlign: 'left' }}>
+                Let's start Matching!
+              </h2>
+              <p style={{ marginTop: 6, marginBottom: 18, color: '#6B7280', fontSize: 14 }}>
+                Enter your username and password to continue.
+              </p>
+
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    border: '1px solid #E5E7EB',
+                    outline: 'none',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                    backgroundColor: '#ffffff',
+                    color: '#000'
+                  }}
+                />
+
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    border: '1px solid #E5E7EB',
+                    outline: 'none',
+                    fontSize: 14,
+                    boxSizing: 'border-box',
+                    backgroundColor: '#ffffff',
+                    color: '#000'
+                  }}
+                />
+
+                <button
+                  type="submit"
+                  style={{
+                    marginTop: 6,
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    border: 'none',
+                    backgroundColor: '#000',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: 15,
+                    transition: '0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ec4899';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#000';
+                  }}
+                >
+                  Login
+                </button>
+              </form>
+
+              {message && (
+                <p style={{
+                  marginTop: 14,
+                  fontSize: 13,
+                  textAlign: 'left',
+                  color: '#F023CB'
+                }}>
+                  {message}
+                </p>
+              )}
+
+              <div style={{ marginTop: 18, fontSize: 13, color: '#6B7280', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span>Don't have an account?</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/register')}
+                  style={{ background: 'transparent', border: 'none', color: '#ec4899', cursor: 'pointer', fontWeight: 600 }}
+                >
+                  Sing Up
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div
+            role="img"
+            aria-label="Eras wall"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              backgroundImage: `url('/Components/ErasLoginWall.png')`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              height: '100vh'
+            }}
+            className="right-image-column"
+          />
         </div>
     );
 };
