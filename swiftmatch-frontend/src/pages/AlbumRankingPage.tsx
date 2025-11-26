@@ -60,7 +60,6 @@ const albumColorMap: { [key: string]: string } = {
 // ESCAPE REGEXP UTIL
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-// CORRIGIDA: usa regex com word boundaries para evitar matches parciais ("RED" dentro de "TORTURED")
 const getAlbumBgColor = (title: string) => {
   const txt = (title || '').toString();
 
@@ -155,10 +154,11 @@ const getContrastColor = (hex: string) => {
 const AlbumRankingPage: React.FC = () => {
   const [ranking, setRanking] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState(''); // ainda pode ser usado p/ salvar sucesso
+  const [message, setMessage] = useState('');
   const [userTheme, setUserTheme] = useState<ThemeColor | null>(null);
 
   const navigate = useNavigate();
+
   const dragItem = useRef<number | null>(null);
   const dragOverItem = useRef<number | null>(null);
 
@@ -197,7 +197,6 @@ const AlbumRankingPage: React.FC = () => {
       const a = await fetchAllAlbums();
       const sorted = [...a].sort((x, y) => x.release_year - y.release_year);
       setRanking(sorted);
-      // NÃO mostramos essa mensagem no header (foi removida conforme pedido)
       setLoading(false);
     };
     load();
@@ -211,6 +210,8 @@ const AlbumRankingPage: React.FC = () => {
     try {
       await API.put('/rankings/albums/', { rankings: formatted });
       setMessage('Ranking salvo com sucesso!');
+      // --- AQUI ESTÁ A MUDANÇA: Redireciona para /catalog ---
+      navigate('/catalog');
     } catch (err: any) {
       setMessage(`Erro ao salvar ranking: ${axios.isAxiosError(err) ? err.message : 'Erro desconhecido'}`);
       console.error(err);
@@ -260,21 +261,19 @@ const AlbumRankingPage: React.FC = () => {
 
       <main style={{ paddingTop: HEADER_HEIGHT + 100, paddingBottom: 140, boxSizing: 'border-box' }}>
         <div style={{ padding: `0 ${HEADER_GUTTER}px`, maxWidth: '100%' }}>
-          {/* --- AQUI: removi subtítulo e mensagem. SÓ UMA FRASE (o título) --- */}
           <header style={{ marginBottom: 100, textAlign: 'center' }}>
             <h1
-                style={{
+              style={{
                 fontSize: 40,
-                fontWeight: 400,   // mais fino
+                fontWeight: 400, 
                 color: colors.dark,
                 margin: 0,
-                }}
+              }}
             >
                 Rank your favorite albums!
             </h1>
           </header>
 
-          {/* FULL-BLEED JUSTINHO — TODAS AS FAIXAS COM ALTURA FIXA E IGUAL */}
           <div style={{ width: '100%', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {ranking.map((album, index) => {
@@ -344,7 +343,7 @@ const AlbumRankingPage: React.FC = () => {
         <div style={{ width: '100%', boxSizing: 'border-box', padding: '0 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button onClick={handleSaveRanking} disabled={loading} style={{ background: colors.dark, color: colors.light, borderRadius: 999, width: '100%', maxWidth: 360, padding: '12px 18px', fontWeight: 800 }}>
-              {loading ? 'Carregando...' : 'Salvar Meu Ranking'}
+              {loading ? 'Carregando...' : 'Save Ranking'}
             </button>
           </div>
         </div>
