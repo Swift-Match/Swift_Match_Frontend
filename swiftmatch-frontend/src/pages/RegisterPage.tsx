@@ -2,194 +2,241 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/axiosConfig';
 
+// countries...
+const countries = [
+  { code: 'US', name: 'United States' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'FR', name: 'France' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'AU', name: 'Australia' },
+];
+
 const RegisterPage: React.FC = () => {
-    const [username, setUsername] = useState<string>('');
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const [firstName, setFirstName] = useState<string>(''); 
-    const [country, setCountry] = useState<string>('');     
-    
-    const [message, setMessage] = useState<string>('');
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    // Limpa tokens antigos ao abrir a página para evitar conflito (Erro 401)
-    useEffect(() => {
-        localStorage.removeItem('authToken');
-        delete API.defaults.headers.common['Authorization'];
-    }, []);
+  // ====== ADJUST THESE VALUES TO MOVE / RESIZE THE SIDE IMAGES ======
+  const LEFT_IMG_SRC = '/Components/LeftRegisterWall.png';   // change if needed
+  const RIGHT_IMG_SRC = '/Components/RightRegisterWall.png';
+  const LEFT_IMG_WIDTH = '500px';
+  const LEFT_IMG_HEIGHT = '92vh';
+  const RIGHT_IMG_WIDTH = '500px';
+  const RIGHT_IMG_HEIGHT = '92vh';
+  const LEFT_IMG_OFFSET_X = -50;
+  const LEFT_IMG_OFFSET_Y = 30;
+  const RIGHT_IMG_OFFSET_X = -50;
+  const RIGHT_IMG_OFFSET_Y = 30;
+  // =================================================================
 
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setMessage('');
+  // center container sizing (also adjustable)
+  const CENTER_WIDTH = '520px';
+  const CENTER_PADDING = 36;
+  const OUTLINE_PADDING = 20;
 
-        // 1. Garante limpeza de credenciais antigas antes de enviar
-        localStorage.removeItem('authToken');
-        delete API.defaults.headers.common['Authorization'];
+  const CENTER_HEIGHT = '590px'; 
+  const OUTLINE_HEIGHT = '520px'; 
 
-        const registrationPayload = { 
-            username, 
-            email, 
-            password, 
-            first_name: firstName, 
-            country: country,      
-        };
-        
-        const registerEndpoint = '/api/users/register/'; 
-        const loginEndpoint = '/api/auth/token/'; // Endpoint correto de login
+  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [firstName, setFirstName] = useState<string>('');
+  const [country, setCountry] = useState<string>('BR');
+  const [message, setMessage] = useState<string>('');
 
-        let registrationSuccessful = false;
+  useEffect(() => {
+    localStorage.removeItem('authToken');
+    delete API.defaults.headers.common['Authorization'];
+  }, []);
 
-        try {
-            // PASSO 1: Registrar o usuário (Sem token no cabeçalho)
-            await API.post(registerEndpoint, registrationPayload);
-            registrationSuccessful = true;
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+    const payload = { username, email, password, first_name: firstName, country };
+    try {
+      await API.post('/api/users/register/', payload);
+      const loginRes = await API.post('/api/auth/token/', { username, password });
+      const token = loginRes.data.access || loginRes.data.auth_token || loginRes.data.token;
+      if (token) {
+        localStorage.setItem('authToken', token);
+        API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setMessage('Welcome! Proceeding to theme selection...');
+        setTimeout(() => navigate('/theme-selection'), 2000);
+      } else {
+        setMessage('Registration completed! Please log in manually.');
+        setTimeout(() => navigate('/login'), 2000);
+      }
+    } catch (err) {
+      console.error('Registration error', err);
+      setMessage('Registration failed. Check your data and try again.');
+    }
+  };
 
-            // PASSO 2: Fazer login automático
-            const loginPayload = { username, password }; // Ou email, dependendo do seu backend
-            const loginResponse = await API.post(loginEndpoint, loginPayload);
-            
-            const token = loginResponse.data.access || loginResponse.data.auth_token || loginResponse.data.token;
-            
-            if (token) {
-                localStorage.setItem('authToken', token);
-                API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                
-                setMessage("Registro e Login bem-sucedidos! Redirecionando...");
-                
-                // Como é um registro novo, assumimos que é o primeiro login
-                setTimeout(() => {
-                    navigate('/theme-selection'); 
-                }, 2000);
-            } else {
-                // Caso raro: registro funcionou, mas login não retornou token
-                setMessage("Registro concluído! Faça login manualmente.");
-                setTimeout(() => navigate('/login'), 2000);
-            }
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        width: '100vw',
+        position: 'relative',
+        backgroundColor: '#171614',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        padding: 24,
+      }}
+    >
+      {/* LEFT IMAGE */}
+      <img
+        src={LEFT_IMG_SRC}
+        alt="left wall"
+        style={{
+          position: 'absolute',
+          left: LEFT_IMG_OFFSET_X,
+          top: LEFT_IMG_OFFSET_Y,
+          width: LEFT_IMG_WIDTH,
+          height: LEFT_IMG_HEIGHT,
+          objectFit: 'contain',
+          pointerEvents: 'none',
+          zIndex: 1,
+          transform: 'translateZ(0)',
+        }}
+        draggable={false}
+      />
 
-        } catch (error: any) {
-            console.error("Erro no Fluxo de Registro/Login:", error);
-            
-            if (registrationSuccessful) {
-                setMessage("Registro concluído! O login automático falhou. Por favor, faça login manualmente.");
-                setTimeout(() => navigate('/login'), 2000);
-                return;
-            } else {
-                let errorMessage = "Erro na comunicação com o backend ou dados inválidos.";
-                
-                if (error.response) {
-                    const status = error.response.status;
-                    const data = error.response.data;
-                    
-                    // Tratamento específico para 401 no Registro
-                    if (status === 401) {
-                        errorMessage = "Erro de Permissão (401). O navegador enviou credenciais antigas. Tente recarregar a página (F5).";
-                    } else if (typeof data === 'object' && data !== null) {
-                         const fieldErrors = Object.keys(data)
-                             .map(key => {
-                                 const errorArray = Array.isArray(data[key]) ? data[key] : [data[key]];
-                                 return `${key.replace('_', ' ')}: ${errorArray.join(', ')}`;
-                             })
-                             .join('; ');
-                             
-                        errorMessage = data.detail || data.non_field_errors?.[0] || fieldErrors || errorMessage;
-                        
-                        if (errorMessage.includes("already exists")) {
-                             errorMessage = "Usuário: Um usuário com esse nome já existe. Tente outro nome.";
-                        }
-                    }
-                } else if (error.request) {
-                     errorMessage = "Erro de rede. Verifique se o Docker está rodando.";
-                }
-                
-                setMessage(`Falha no Registro: ${errorMessage}`);
-            }
-        }
-    };
+      {/* RIGHT IMAGE */}
+      <img
+        src={RIGHT_IMG_SRC}
+        alt="right wall"
+        style={{
+          position: 'absolute',
+          right: RIGHT_IMG_OFFSET_X,
+          top: RIGHT_IMG_OFFSET_Y,
+          width: RIGHT_IMG_WIDTH,
+          height: RIGHT_IMG_HEIGHT,
+          objectFit: 'contain',
+          pointerEvents: 'none',
+          zIndex: 1,
+          transform: 'translateZ(0)',
+        }}
+        draggable={false}
+      />
 
-    return (
-        <div className="bg-white p-8 md:p-10 rounded-xl shadow-2xl max-w-sm w-full mx-auto my-10" 
-             style={{ fontFamily: 'Inter, sans-serif' }}>
-            
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                Crie sua conta SwiftMatch
-            </h2>
-            
-            <form onSubmit={handleRegister} className="flex flex-col gap-4">
+      {/* CENTER (sharp corners) */}
+      <div
+        style={{
+          width: CENTER_WIDTH,
+          maxWidth: 'calc(100% - 48px)',
+          background: '#ffffff',
+          height: CENTER_HEIGHT, 
+          borderRadius: 0, // sharp corners
+          padding: CENTER_PADDING,
+          boxSizing: 'border-box',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+          zIndex: 10,
+        }}
+      >
+        {/* OUTLINE RECTANGLE (sharp corners) */}
+        <div
+          style={{
+            border: '2px solid #000',
+            padding: OUTLINE_PADDING,
+            boxSizing: 'border-box',
+            borderRadius: 0, // sharp corners
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            alignItems: 'stretch',
+            background: 'transparent',
+            height: OUTLINE_HEIGHT, 
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <img src="/Components/ThemeSwiftMatch.svg" alt="logo" style={{ height: 52, objectFit: 'contain' }} />
+          </div>
 
-                <input 
-                    type="text" 
-                    placeholder="Primeiro Nome (first_name)" 
-                    value={firstName} 
-                    onChange={(e) => setFirstName(e.target.value)} 
-                    required 
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                />
+          <h2 style={{ margin: 0, textAlign: 'center', fontSize: 22, fontWeight: 700, color: '#111827' }}>
+            Sign up
+          </h2>
 
-                <input 
-                    type="text" 
-                    placeholder="País (country)" 
-                    value={country} 
-                    onChange={(e) => setCountry(e.target.value)} 
-                    required 
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                />
-                
-                <input 
-                    type="text" 
-                    placeholder="Nome de Usuário" 
-                    value={username} 
-                    onChange={(e) => setUsername(e.target.value)} 
-                    required 
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                />
-                
-                <input 
-                    type="email" 
-                    placeholder="Email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                />
-                
-                <input 
-                    type="password" 
-                    placeholder="Senha" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                    className="p-3 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 transition duration-150"
-                />
-                
-                <button 
-                    type="submit" 
-                    className="p-3 text-white font-semibold rounded-lg transition duration-150 
-                               bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300"
-                >
-                    Registrar
-                </button>
-            </form>
-            
-            {message && (
-                <p className={`mt-4 text-center text-sm ${message.includes('bem-sucedidos') || message.includes('concluído') ? 'text-green-600' : 'text-red-600'}`}>
-                    {message}
-                </p>
-            )}
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input
+              type="text"
+              placeholder="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#fff', color: '#000' }}
+            />
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              required
+              style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#fff', color: '#000' }}
+            >
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.code} - {c.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#fff', color: '#000' }}
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#fff', color: '#000' }}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{ padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', background: '#fff', color: '#000' }}
+            />
 
-            <div className="mt-6 text-center text-sm">
-                <span className="text-gray-500">
-                    Já tem uma conta?
-                </span>
-                <button 
-                    type="button" 
-                    onClick={() => navigate('/login')} 
-                    className="ml-2 font-medium text-pink-600 hover:text-pink-700 bg-transparent p-0 border-none"
-                >
-                    Fazer Login
-                </button>
-            </div>
+            <button
+              type="submit"
+              style={{
+                marginTop: 6,
+                padding: '11px 14px',
+                borderRadius: 6,
+                border: 'none',
+                backgroundColor: '#000',
+                color: '#fff',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: 15,
+                transition: 'background-color 160ms ease',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ec4899';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#000';
+              }}
+            >
+              Sign up
+            </button>
+          </form>
+
+          {message && <p style={{ marginTop: 8, fontSize: 13, textAlign: 'center', color: '#F023CB' }}>{message}</p>}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default RegisterPage;
