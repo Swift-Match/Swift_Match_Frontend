@@ -215,7 +215,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   // ---------- fetch theme/profile ----------
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
+      const API_URL = `${import.meta.env.VITE_API_URL}/api/users/me/current-theme/`;
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoadingTheme(false); return; }
       try {
@@ -233,7 +233,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/';
+      const API_URL = `${import.meta.env.VITE_API_URL}/api/users/me/`;
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoadingProfile(false); return; }
       try {
@@ -253,9 +253,8 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     fetchUserProfile();
   }, []);
 
-  // ---------- fetch ranked titles ----------
   useEffect(() => {
-    const url = '${import.meta.env.VITE_API_URL}/api/rankings/user/ranked-titles/';
+    const url = `${import.meta.env.VITE_API_URL}/api/rankings/user/ranked-titles/`;
     const fetchRankedTitles = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) return;
@@ -368,7 +367,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     const token = localStorage.getItem('authToken');
     try {
       if (token) {
-        // tenta notificar a API (se existir)
         await fetch('${import.meta.env.VITE_API_URL}/api/auth/logout/', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
