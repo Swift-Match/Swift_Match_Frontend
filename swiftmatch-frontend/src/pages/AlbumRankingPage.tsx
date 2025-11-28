@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const base = (import.meta.env.VITE_API_URL as string) || '';
 const API = axios.create({
-  baseURL: '${import.meta.env.VITE_API_URL}/api',
+  baseURL: base ? `${base.replace(/\/+$/,'')}/api` : '/api', // evita // e garante fallback relativo
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -164,43 +165,61 @@ const AlbumRankingPage: React.FC = () => {
 
   const fetchAllAlbums = async (): Promise<Album[]> => {
     try {
+      console.log('[fetchAllAlbums] calling', API.defaults.baseURL + '/albums/all/');
       const res = await API.get('/albums/all/');
-      const albumsFromDb: any[] = res.data || [];
+      console.log('[fetchAllAlbums] status', res.status);
+      const albumsFromDb: any[] = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
+      if (!Array.isArray(albumsFromDb)) {
+        console.warn('[fetchAllAlbums] unexpected body', res.data);
+        return [];
+      }
       return albumsFromDb.map((a: any) => ({
-        id: a.id,
-        title: a.title,
-        release_date: a.release_date,
-        release_year: new Date(a.release_date).getFullYear(),
-        cover_image_url: a.cover_image_url,
-        cover_url: a.cover_image_url,
+        id: Number(a.id),
+        title: a.title ?? String(a.name ?? ''),
+        release_date: a.release_date ?? a.date ?? '',
+        release_year: a.release_date ? new Date(a.release_date).getFullYear() : (a.release_year ?? NaN),
+        cover_image_url: a.cover_image_url ?? a.cover_url ?? a.cover ?? a.image ?? '',
+        cover_url: a.cover_image_url ?? a.cover_url ?? a.cover ?? a.image ?? '',
       }));
-    } catch (err) {
-      console.error('Erro ao carregar álbuns', err);
+    } catch (err: any) {
+      console.error('Erro ao carregar álbuns', err?.response ?? err);
+      // mostra mensagem curta no UI para debug
+      setMessage && setMessage('Erro ao carregar álbuns: ver console');
       return [];
     }
   };
 
+
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    const themeKey = localStorage.getItem('userThemeKey') || 'MIDNIGHTS';
+    const themeKeyRaw = (localStorage.getItem('userThemeKey') || 'MIDNIGHTS').toUpperCase();
+    const theme = themeColorMap[themeKeyRaw] || themeColorMap['MIDNIGHTS'];
+    setUserTheme(theme);
+
     if (!token) {
       setMessage('Sessão expirada. Redirecionando para login.');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/login'), 1200);
       return;
     }
+
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    const theme = themeColorMap[themeKey];
-    setUserTheme(theme || themeColorMap['MIDNIGHTS']);
 
     const load = async () => {
-      setLoading(true);
-      const a = await fetchAllAlbums();
-      const sorted = [...a].sort((x, y) => x.release_year - y.release_year);
-      setRanking(sorted);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const a = await fetchAllAlbums();
+        const sorted = [...a].sort((x, y) => (Number(x.release_year) || 0) - (Number(y.release_year) || 0));
+        setRanking(sorted);
+      } catch (e) {
+        console.error('[AlbumRankingPage] load error', e);
+        setMessage('Erro ao carregar álbuns. Veja console.');
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [navigate]);
+
 
   const colors = userTheme || themeColorMap['MIDNIGHTS'];
   const isDarkBackground = parseInt(colors.dark.substring(1, 3), 16) < 50;
