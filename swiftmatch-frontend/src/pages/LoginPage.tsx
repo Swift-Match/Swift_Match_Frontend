@@ -192,7 +192,7 @@ const LoginPage: React.FC = () => {
                   onClick={() => navigate('/register')}
                   style={{ background: 'transparent', border: 'none', color: '#ec4899', cursor: 'pointer', fontWeight: 600 }}
                 >
-                  Sing Up
+                  Sign Up
                 </button>
               </div>
             </div>
