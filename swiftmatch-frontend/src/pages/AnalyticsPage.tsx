@@ -114,17 +114,34 @@ const AnalyticsPage: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
 
+  const API_BASE = (import.meta.env.VITE_API_URL as string) || '';
+  const API = axios.create({
+    baseURL: API_BASE ? `${API_BASE.replace(/\/+$/,'')}/api` : '/api',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
   useEffect(() => {
     const fetchRankings = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("authToken");
-        const response = await axios.get("${import.meta.env.VITE_API_URL}/api/rankings/global/", {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        setCountries(response.data || []);
-      } catch (err) {
-        console.error("Error fetching global rankings:", err);
+        if (token) API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const url = `${API.defaults.baseURL?.replace(/\/$/,'')}/rankings/global/`;
+        console.log('[Analytics] GET', url, 'with token?', !!token);
+        const res = await API.get('/rankings/global/');
+        console.log('[Analytics] status', res.status);
+        console.log('[Analytics] data sample', Array.isArray(res.data) ? res.data.slice(0,3) : res.data);
+        const payload: CountryRanking[] = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
+        setCountries(payload);
+      } catch (err: any) {
+        console.error('Error fetching global rankings:', err);
+        // logs extras
+        if (err.response) {
+          console.error('[Analytics] err.response.status', err.response.status);
+          console.error('[Analytics] err.response.data', err.response.data);
+        } else {
+          console.error('[Analytics] non-response error', err.message || err);
+        }
         setCountries([]);
       } finally {
         setLoading(false);
