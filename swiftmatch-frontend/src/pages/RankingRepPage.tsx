@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 // --- CONFIGURAÇÕES DE LAYOUT (MANTIDAS) ---
 const REP_ALBUM_ID = 6; // ajuste se necessário
-const API_BASE_URL = '${import.meta.env.VITE_API_URL}/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL + '/api';
+
 
 const COMPONENT_MAX_WIDTH = 800;
 const HEADER_HEIGHT = 80;
@@ -240,7 +241,7 @@ const RankingRepPage: React.FC = () => {
 
   const renderTrackList = () => {
     if (isLoading) {
-      return <div style={{ textAlign: 'center', padding: 40, color: REP_DARK }}>Carregando a lista de músicas do Speak Now...</div>;
+      return <div style={{ textAlign: 'center', padding: 40, color: REP_DARK }}>Carregando a lista de músicas do Reputation...</div>;
     }
 
     if (error) {

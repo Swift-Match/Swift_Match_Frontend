@@ -236,7 +236,7 @@ const RankingTSPage: React.FC = () => {
 
   const renderTrackList = () => {
     if (isLoading) {
-      return <div style={{ textAlign: 'center', padding: 40, color: TS_DARK }}>Carregando a lista de músicas do Speak Now...</div>;
+      return <div style={{ textAlign: 'center', padding: 40, color: TS_DARK }}>Carregando a lista de músicas Taylor Swift...</div>;
     }
 
     if (error) {
