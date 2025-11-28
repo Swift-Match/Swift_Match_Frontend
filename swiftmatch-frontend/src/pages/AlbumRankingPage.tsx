@@ -165,14 +165,21 @@ const AlbumRankingPage: React.FC = () => {
 
   const fetchAllAlbums = async (): Promise<Album[]> => {
     try {
-      console.log('[fetchAllAlbums] calling', API.defaults.baseURL + '/albums/all/');
+      const fullUrl = `${API.defaults.baseURL?.replace(/\/$/,'')}/albums/all/`;
+      console.log('[fetchAllAlbums] calling', fullUrl);
+
+      // usa API para manter baseURL/headers
       const res = await API.get('/albums/all/');
       console.log('[fetchAllAlbums] status', res.status);
+      console.log('[fetchAllAlbums] response headers', res.headers);
+      console.log('[fetchAllAlbums] response data sample', res.data && (Array.isArray(res.data) ? res.data.slice(0,2) : res.data));
+
       const albumsFromDb: any[] = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
       if (!Array.isArray(albumsFromDb)) {
-        console.warn('[fetchAllAlbums] unexpected body', res.data);
+        console.warn('[fetchAllAlbums] unexpected body (not array)', res.data);
         return [];
       }
+
       return albumsFromDb.map((a: any) => ({
         id: Number(a.id),
         title: a.title ?? String(a.name ?? ''),
@@ -182,9 +189,18 @@ const AlbumRankingPage: React.FC = () => {
         cover_url: a.cover_image_url ?? a.cover_url ?? a.cover ?? a.image ?? '',
       }));
     } catch (err: any) {
-      console.error('Erro ao carregar álbuns', err?.response ?? err);
-      // mostra mensagem curta no UI para debug
-      setMessage && setMessage('Erro ao carregar álbuns: ver console');
+      // logs exaustivos para saber exatamente que tipo de erro ocorreu
+      console.error('Erro ao carregar álbuns (full error object):', err);
+      if (err.isAxiosError) {
+        console.error('axios error.toJSON():', err.toJSON ? err.toJSON() : null);
+        console.error('err.response?.status:', err.response?.status);
+        console.error('err.response?.headers:', err.response?.headers);
+        console.error('err.response?.data:', err.response?.data);
+      } else {
+        console.error('non-axios error message:', err?.message ?? err);
+      }
+      // msg curta na UI
+      setMessage('Erro ao carregar álbuns — veja console (logs detalhados).');
       return [];
     }
   };
