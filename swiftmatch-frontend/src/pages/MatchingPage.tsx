@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 interface ThemeColor { dark: string; light: string }
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || '${import.meta.env.VITE_API_URL}';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || (import.meta.env.VITE_API_URL as string) || '';
 
 const themeColorMap: { [key: string]: ThemeColor } = {
   TS: { dark: '#0C1A0C', light: '#A9CBAA' },
@@ -303,28 +303,69 @@ const MatchingPage: React.FC = () => {
   const [trackMap, setTrackMap] = useState<Record<number, string>>({});
 
   const fetchAllAlbums = useCallback(async () => {
-    try {
-      const auth = buildAuthHeader();
-      const headers: Record<string, string> = { 'Accept': 'application/json' };
-      if (auth) headers.Authorization = auth;
-      const res = await fetch(`${API_BASE}/api/albums/all/`, { headers });
-      const albums: { id: number; title: string }[] = await res.json();
-      const newMap = albums.reduce((acc, album) => ({ ...acc, [album.id]: album.title }), {} as Record<number, string>);
-      setAlbumMap(newMap);
-    } catch (e) { console.error(e); }
-  }, []);
+      try {
+        const auth = buildAuthHeader();
+        const headers: Record<string, string> = { Accept: 'application/json' };
+        if (auth) headers.Authorization = auth;
+
+        const res = await fetch(`${API_BASE}/api/albums/all/`, { headers });
+        console.log('[fetchAllAlbums] status', res.status);
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          console.warn('[fetchAllAlbums] non-ok response body:', text);
+          return;
+        }
+
+        const albums = await res.json().catch(() => null);
+        if (!Array.isArray(albums)) {
+          console.warn('[fetchAllAlbums] expected array but got:', albums);
+          return;
+        }
+
+        const newMap = albums.reduce((acc: Record<number, string>, album: any) => {
+          if (album && typeof album.id === 'number') acc[album.id] = album.title ?? '';
+          return acc;
+        }, {});
+        setAlbumMap(newMap);
+      } catch (e) {
+        console.error('[fetchAllAlbums] erro', e);
+      }
+    }, [API_BASE]);
+
 
   const fetchTracksForAlbum = useCallback(async (albumId: number) => {
-    try {
-      const auth = buildAuthHeader();
-      const headers: Record<string, string> = { 'Accept': 'application/json' };
-      if (auth) headers.Authorization = auth;
-      const res = await fetch(`${API_BASE}/api/tracks/album/${albumId}/`, { headers });
-      const tracks: { id: number; title: string }[] = await res.json();
-      const newMap = tracks.reduce((acc, track) => ({ ...acc, [track.id]: track.title }), {} as Record<number, string>);
-      setTrackMap(newMap);
-    } catch (e) { console.error(e); }
-  }, []);
+      try {
+        const auth = buildAuthHeader();
+        const headers: Record<string, string> = { Accept: 'application/json' };
+        if (auth) headers.Authorization = auth;
+
+        const res = await fetch(`${API_BASE}/api/tracks/album/${albumId}/`, { headers });
+        console.log('[fetchTracksForAlbum] status', res.status, 'albumId', albumId);
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '');
+          console.warn('[fetchTracksForAlbum] non-ok response body:', text);
+          return;
+        }
+
+        const tracks = await res.json().catch(() => null);
+        if (!Array.isArray(tracks)) {
+          console.warn('[fetchTracksForAlbum] expected array but got:', tracks);
+          return;
+        }
+
+        const newMap = tracks.reduce((acc: Record<number, string>, track: any) => {
+          if (track && typeof track.id === 'number') acc[track.id] = track.title ?? '';
+          return acc;
+        }, {});
+        setTrackMap(newMap);
+      } catch (e) {
+        console.error('[fetchTracksForAlbum] erro', e);
+      }
+    }, [API_BASE]);
+
+
 
   useEffect(() => {
     const themeKey = (localStorage.getItem('userThemeKey') || 'MIDNIGHTS') as string;
