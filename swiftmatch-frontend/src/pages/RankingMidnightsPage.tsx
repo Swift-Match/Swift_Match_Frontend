@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 // --- CONFIGURAÇÕES DE LAYOUT (MANTIDAS) ---
 const MIDNIGHTS_ALBUM_ID = 10; // ajuste se necessário
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = '${import.meta.env.VITE_API_URL}/api';
 
 const COMPONENT_MAX_WIDTH = 800;
 const HEADER_HEIGHT = 80;

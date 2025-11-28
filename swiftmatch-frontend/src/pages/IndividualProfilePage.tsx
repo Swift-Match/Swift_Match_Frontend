@@ -201,7 +201,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   // ---------- autocomplete fetch ----------
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
-    const API_URL = `http://localhost:8000/api/social/users/search/?query=${encodeURIComponent(term)}`;
+    const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${encodeURIComponent(term)}`;
     const token = localStorage.getItem('authToken'); if (!token) return;
     try {
       const res = await fetch(API_URL, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
@@ -215,7 +215,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   // ---------- fetch theme/profile ----------
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = 'http://localhost:8000/api/users/me/current-theme/';
+      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoadingTheme(false); return; }
       try {
@@ -233,7 +233,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const API_URL = 'http://localhost:8000/api/users/me/';
+      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/';
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoadingProfile(false); return; }
       try {
@@ -255,7 +255,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
 
   // ---------- fetch ranked titles ----------
   useEffect(() => {
-    const url = 'http://localhost:8000/api/rankings/user/ranked-titles/';
+    const url = '${import.meta.env.VITE_API_URL}/api/rankings/user/ranked-titles/';
     const fetchRankedTitles = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) return;
@@ -286,7 +286,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   const prefixIfRelative = (url?: string | null) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('/')) return `http://localhost:8000${url}`;
+    if (url.startsWith('/')) return `${import.meta.env.VITE_API_URL}${url}`;
     return url;
   };
   const pickProfileUrl = (p: UserProfile | null) => {
@@ -369,7 +369,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     try {
       if (token) {
         // tenta notificar a API (se existir)
-        await fetch('http://localhost:8000/api/auth/logout/', {
+        await fetch('${import.meta.env.VITE_API_URL}/api/auth/logout/', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });

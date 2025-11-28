@@ -119,7 +119,7 @@ const AnalyticsPage: React.FC = () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("authToken");
-        const response = await axios.get("http://localhost:8000/api/rankings/global/", {
+        const response = await axios.get("${import.meta.env.VITE_API_URL}/api/rankings/global/", {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         setCountries(response.data || []);

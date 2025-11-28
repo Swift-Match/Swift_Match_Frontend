@@ -70,7 +70,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
 
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
-    const API_URL = `http://localhost:8000/api/social/users/search/?query=${term}`;
+    const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${term}`;
     const token = localStorage.getItem('authToken');
     if (!token) return;
     try {
@@ -99,7 +99,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
 
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = 'http://localhost:8000/api/users/me/current-theme/';
+      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoading(false); return; }
       try {
@@ -122,7 +122,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
     const token = localStorage.getItem('authToken');
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:8000/api/social/friendships/', {
+      const response = await fetch('${import.meta.env.VITE_API_URL}/api/social/friendships/', {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -139,7 +139,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
     const token = localStorage.getItem('authToken');
     if (!token) return;
     try {
-      const response = await fetch(`http://localhost:8000/api/social/friendships/${requestId}/${action}/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/social/friendships/${requestId}/${action}/`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
       });

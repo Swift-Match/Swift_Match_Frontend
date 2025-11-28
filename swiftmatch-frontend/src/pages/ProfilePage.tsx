@@ -136,7 +136,7 @@ const ProfilePage: React.FC = () => {
   // ---------- autocomplete fetch ----------
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
-    const API_URL = `http://localhost:8000/api/social/users/search/?query=${encodeURIComponent(term)}`;
+    const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${encodeURIComponent(term)}`;
     const token = localStorage.getItem('authToken'); if (!token) return;
     try {
       const res = await fetch(API_URL, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
@@ -150,7 +150,7 @@ const ProfilePage: React.FC = () => {
   const prefixIfRelative = (url?: string | null) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('/')) return `http://localhost:8000${url}`;
+    if (url.startsWith('/')) return `${import.meta.env.VITE_API_URL}${url}`;
     return url;
   };
   const pickProfileUrl = (p: UserProfile | null) => {
@@ -175,7 +175,7 @@ const ProfilePage: React.FC = () => {
   // ---------- helper: fetch album by key/title ----------
   const fetchAlbumByKey = async (albumKeyOrTitle: string, token?: string) => {
     try {
-      const res = await fetch('http://localhost:8000/api/albums/all/', {
+      const res = await fetch('${import.meta.env.VITE_API_URL}/api/albums/all/', {
         headers: token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
       });
       if (!res.ok) return null;
@@ -237,7 +237,7 @@ const ProfilePage: React.FC = () => {
         // 2) checa se USUÁRIO LOGADO ranqueou tracks deste álbum
         const headers: any = { 'Content-Type': 'application/json' };
         if (token) headers.Authorization = `Bearer ${token}`;
-        const tracksRes = await fetch(`http://localhost:8000/api/rankings/tracks/${albumId}/`, {
+        const tracksRes = await fetch(`${import.meta.env.VITE_API_URL}/api/rankings/tracks/${albumId}/`, {
           method: 'GET',
           headers
         });
@@ -309,7 +309,7 @@ const ProfilePage: React.FC = () => {
   // ---------- fetch theme of viewer (keeps same behavior) ----------
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = 'http://localhost:8000/api/users/me/current-theme/';
+      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
       const token = localStorage.getItem('authToken');
       if (!token) { setIsLoadingTheme(false); return; }
       try {
@@ -332,7 +332,7 @@ const ProfilePage: React.FC = () => {
       setIsLoadingProfile(true);
       try {
         const token = localStorage.getItem('authToken');
-        const res = await fetch(`http://localhost:8000/api/users/${userId}/`, { headers: { Authorization: `Bearer ${token || ''}` } });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${userId}/`, { headers: { Authorization: `Bearer ${token || ''}` } });
         if (!res.ok) throw new Error(`Status ${res.status}`);
         const data = await res.json();
         setUserProfile(data);
@@ -354,7 +354,7 @@ const ProfilePage: React.FC = () => {
       if (!token) return;
       setIsLoadingRanks(true);
       try {
-        const res = await fetch(`http://localhost:8000/api/rankings/user/${userId}/ranked-titles/`, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/rankings/user/${userId}/ranked-titles/`, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
         if (!res.ok) {
           setAlbumsRankedViaAlbums([]); setAlbumsRankedViaTracks([]); setCombinedAlbums([]);
           return;
@@ -381,7 +381,7 @@ const ProfilePage: React.FC = () => {
     try {
       const token = localStorage.getItem('authToken');
       const res = await axios.post(
-        `http://localhost:8000/api/social/users/${userId}/request-friendship/`,
+        `${import.meta.env.VITE_API_URL}/api/social/users/${userId}/request-friendship/`,
         {},
         { headers: { Authorization: `Bearer ${token || ''}` } }
       );

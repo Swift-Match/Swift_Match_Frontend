@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 interface ThemeColor { dark: string; light: string }
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string) || 'http://localhost:8000';
+const API_BASE = (import.meta.env.VITE_API_BASE as string) || '${import.meta.env.VITE_API_URL}';
 
 const themeColorMap: { [key: string]: ThemeColor } = {
   TS: { dark: '#0C1A0C', light: '#A9CBAA' },
