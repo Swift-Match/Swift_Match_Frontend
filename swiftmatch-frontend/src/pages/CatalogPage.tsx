@@ -122,7 +122,7 @@ const CatalogPage: React.FC<CatalogPageProps> = () => {
       return;
     }
 
-    const API_URL = `http://localhost:8000/api/social/users/search/?query=${term}`;
+    const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${term}`;
     const token = localStorage.getItem('authToken');
 
     if (!token) return;
@@ -162,7 +162,7 @@ const CatalogPage: React.FC<CatalogPageProps> = () => {
 
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = 'http://localhost:8000/api/users/me/current-theme/';
+      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
       const token = localStorage.getItem('authToken');
 
       if (!token) {
