@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// --- CONFIGURAÇÕES DE LAYOUT (MANTIDAS) ---
-const TS_ALBUM_ID = 1; // ajuste se necessário
+const TS_ALBUM_ID = 1; 
 const API_BASE_URL = '${import.meta.env.VITE_API_URL}/api';
 
 const COMPONENT_MAX_WIDTH = 800;
@@ -10,11 +9,9 @@ const HEADER_HEIGHT = 80;
 const GAP_PX = 50;
 const ALBUM_SCALE = 1.4;
 
-// Cores do Tema Speak Now
-const TS_DARK = '#0C1A0C';   // dark
-const TS_LIGHT = '#A9CBAA';  // light
+const TS_DARK = '#0C1A0C';   
+const TS_LIGHT = '#A9CBAA';  
 
-// Tipagem para as músicas
 interface Track {
   id: number;
   title: string;
@@ -22,7 +19,6 @@ interface Track {
   album: number;
 }
 
-// --- Componente de botão customizável ---
 interface ButtonCustomProps {
   width?: number | string;
   height?: number | string;
@@ -306,7 +302,7 @@ const RankingTSPage: React.FC = () => {
                       fontSize: 16,
                       color: TS_LIGHT,
                       fontWeight: 600,
-                      marginTop: 10,    // afasta do topo
+                      marginTop: 10,   
                       marginLeft: 0, 
                       wordBreak: 'break-word',
                       whiteSpace: 'normal'
@@ -364,9 +360,9 @@ const RankingTSPage: React.FC = () => {
       {/* Botão Salvar Ranking */}
       <div style={{ width: '100%', margin: '8px auto 56px', display: 'flex', justifyContent: 'flex-end', padding: '0 20px', boxSizing: 'border-box', position: 'relative' }}>
         <ButtonCustom
-          width={220}       // largura livre
-          height={60}       // altura livre
-          borderRadius={30} // arredondamento livre
+          width={220}      
+          height={60}     
+          borderRadius={30} 
           onClick={handleSaveRanking}
         >
           Save Ranking
