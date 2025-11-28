@@ -174,28 +174,24 @@ const ProfilePage: React.FC = () => {
 
   // ---------- helper: fetch album by key/title ----------
   const fetchAlbumByKey = async (albumKeyOrTitle: string, token?: string) => {
-    try {
-      const res = await fetch('${import.meta.env.VITE_API_URL}/api/albums/all/', {
-        headers: token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
-      });
-      if (!res.ok) return null;
-      const albums: any[] = await res.json();
-      const targetNorm = normalize(albumKeyOrTitle);
-      // try exact normalized match first, then contains
-      let found = albums.find(a => a?.title && normalize(a.title) === targetNorm);
-      if (!found) {
-        found = albums.find(a => a?.title && normalize(a.title).includes(targetNorm));
-      }
-      if (!found) {
-        // try reverse: target contains album title (covers cases like "1989 (Taylor's Version)")
-        found = albums.find(a => a?.title && targetNorm.includes(normalize(a.title)));
-      }
-      return found ?? null;
-    } catch (err) {
-      console.error('[fetchAlbumByKey] erro', err);
-      return null;
-    }
-  };
+    try {
+        const base = import.meta.env.VITE_API_URL;
+        const res = await fetch(`${base}/api/albums/all/`, {
+        headers: token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) return null;
+        const albums: any[] = await res.json();
+        const targetNorm = normalize(albumKeyOrTitle);
+        let found = albums.find(a => a?.title && normalize(a.title) === targetNorm);
+        if (!found) found = albums.find(a => a?.title && normalize(a.title).includes(targetNorm));
+        if (!found) found = albums.find(a => a?.title && targetNorm.includes(normalize(a.title)));
+        return found ?? null;
+    } catch (err) {
+        console.error('[fetchAlbumByKey] erro', err);
+        return null;
+    }
+    };
+
 
   // ---------- RankButton component (substituído para checar tracks antes de navegar) ----------
   interface RankButtonProps { albumKey: ThemeKey | 'ALBUM'; route: string; colors: typeof themeColorMap['TS']; }
@@ -308,22 +304,23 @@ const ProfilePage: React.FC = () => {
 
   // ---------- fetch theme of viewer (keeps same behavior) ----------
   useEffect(() => {
-    const fetchUserTheme = async () => {
-      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
-      const token = localStorage.getItem('authToken');
-      if (!token) { setIsLoadingTheme(false); return; }
-      try {
-        const res = await fetch(API_URL, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
-        if (res.ok) {
-          const data = await res.json();
-          const receivedTheme = data.tema as ThemeKey;
-          if (receivedTheme && receivedTheme in themeColorMap) setUserTheme(receivedTheme);
-        }
-      } catch (err) { console.error('Erro fetch theme', err); }
-      finally { setIsLoadingTheme(false); }
-    };
-    fetchUserTheme();
-  }, []);
+    const fetchUserTheme = async () => {
+        const base = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('authToken');
+        if (!token) { setIsLoadingTheme(false); return; }
+        try {
+        const res = await fetch(`${base}/api/users/me/current-theme/`, { method: 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+        if (res.ok) {
+            const data = await res.json();
+            const receivedTheme = data.tema as ThemeKey;
+            if (receivedTheme && receivedTheme in themeColorMap) setUserTheme(receivedTheme);
+        }
+        } catch (err) { console.error('Erro fetch theme', err); }
+        finally { setIsLoadingTheme(false); }
+    };
+    fetchUserTheme();
+    }, []);
+
 
   // ---------- fetch other user's profile ----------
   useEffect(() => {
@@ -376,21 +373,25 @@ const ProfilePage: React.FC = () => {
 
   // ---------- friend request (POST) ----------
   const handleSendFriendRequest = async () => {
-    if (!userId) return;
-    setFriendRequestStatus('loading'); setFriendRequestMessage(null);
-    try {
-      const token = localStorage.getItem('authToken');
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/social/users/${userId}/request-friendship/`,
-        {},
-        { headers: { Authorization: `Bearer ${token || ''}` } }
-      );
-      if (res.status === 201) { setFriendRequestStatus('sent'); setFriendRequestMessage(res.data.message); }
-      else if (res.status === 200) { setFriendRequestStatus('accepted'); setFriendRequestMessage(res.data.message); }
-    } catch (err: any) {
-      setFriendRequestStatus('error'); setFriendRequestMessage(err.response?.data?.error || 'Erro ao enviar pedido');
-    }
-  };
+    if (!userId) return;
+    setFriendRequestStatus('loading'); setFriendRequestMessage(null);
+    try {
+        const token = localStorage.getItem('authToken');
+        console.log('sending friend request to user', userId, 'token?', !!token);
+        const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/social/users/${userId}/request-friendship/`,
+        {},
+        { headers: { Authorization: `Bearer ${token || ''}` } }
+        );
+        console.log('friend req response', res.status, res.data);
+        if (res.status === 201) { setFriendRequestStatus('sent'); setFriendRequestMessage(res.data.message); }
+        else if (res.status === 200) { setFriendRequestStatus('accepted'); setFriendRequestMessage(res.data.message); }
+    } catch (err:any) {
+        console.error('friend req error', err?.response ?? err);
+        setFriendRequestStatus('error'); setFriendRequestMessage(err.response?.data?.error || 'Erro ao enviar pedido');
+    }
+    };
+
 
   if (isLoadingTheme) return (<div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p>Carregando tema...</p></div>);
 
