@@ -70,20 +70,29 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
 
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
-    const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${term}`;
+    const base = (import.meta.env.VITE_API_URL as string) || '';
+    const API_URL = `${base.replace(/\/+$/,'')}/api/social/users/search/?query=${encodeURIComponent(term)}`;
     const token = localStorage.getItem('authToken');
+    console.log('[Updates] fetchUsers ->', API_URL, 'token?', !!token);
     if (!token) return;
     try {
       const response = await fetch(API_URL, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       });
+      console.log('[Updates] fetchUsers status', response.status);
       if (response.ok) {
-        const data: UserResult[] = await response.json();
-        setSearchResults(data);
-      } else setSearchResults([]);
-    } catch (error) { console.error("Erro de conexão ao buscar usuários:", error); setSearchResults([]); }
+        const data = await response.json().catch(() => []);
+        setSearchResults(Array.isArray(data) ? data : (data?.results ?? []));
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error("Erro de conexão ao buscar usuários:", error);
+      setSearchResults([]);
+    }
   }, []);
+
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     const term = event.target.value;
@@ -99,53 +108,89 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
 
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
+      const base = (import.meta.env.VITE_API_URL as string) || '';
+      const API_URL = `${base.replace(/\/+$/,'')}/api/users/me/current-theme/`;
       const token = localStorage.getItem('authToken');
+      console.log('[Updates] fetchUserTheme ->', API_URL, 'token?', !!token);
       if (!token) { setIsLoading(false); return; }
       try {
         const response = await fetch(API_URL, {
           method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
+        console.log('[Updates] fetchUserTheme status', response.status);
         if (response.ok) {
-          const data = await response.json();
-          const receivedTheme = data.tema as ThemeKey;
+          const data = await response.json().catch(() => ({}));
+          const receivedTheme = (data?.tema as ThemeKey) || (localStorage.getItem('userThemeKey') as ThemeKey) || 'TS';
           if (receivedTheme && receivedTheme in themeColorMap) setUserTheme(receivedTheme);
+          else setUserTheme('TS');
+        } else {
+          console.warn('[Updates] fetchUserTheme non-ok body', await response.text().catch(()=>null));
         }
-      } catch (error) { console.error("Erro de conexão ou parsing:", error); }
-      finally { setIsLoading(false); }
+      } catch (error) {
+        console.error("Erro de conexão ou parsing:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchUserTheme();
   }, []);
 
+
   const fetchFriendRequests = useCallback(async () => {
+    const base = (import.meta.env.VITE_API_URL as string) || '';
+    const API_URL = `${base.replace(/\/+$/,'')}/api/social/friendships/`;
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    console.log('[Updates] fetchFriendRequests ->', API_URL, 'token?', !!token);
+    if (!token) { setFriendRequests([]); return; }
     try {
-      const response = await fetch('${import.meta.env.VITE_API_URL}/api/social/friendships/', {
+      const response = await fetch(API_URL, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('[Updates] fetchFriendRequests status', response.status);
       if (response.ok) {
-        const data: FriendshipRequest[] = await response.json();
-        setFriendRequests(data);
-      } else setFriendRequests([]);
-    } catch (error) { console.error("Erro ao buscar pedidos de amizade:", error); setFriendRequests([]); }
+        const data = await response.json().catch(() => []);
+        // normaliza formatos comuns: array direto ou { results: [] }
+        const arr = Array.isArray(data) ? data : (data?.results ?? []);
+        setFriendRequests(Array.isArray(arr) ? arr : []);
+      } else {
+        console.warn('[Updates] fetchFriendRequests non-ok body', await response.text().catch(()=>null));
+        setFriendRequests([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar pedidos de amizade:", error);
+      setFriendRequests([]);
+    }
   }, []);
 
-  useEffect(() => { fetchFriendRequests(); }, [fetchFriendRequests]);
+  useEffect(() => {
+    fetchFriendRequests(); // primeira chamada imediata
+    const iv = setInterval(() => { fetchFriendRequests(); }, 10000);
+    return () => clearInterval(iv);
+  }, [fetchFriendRequests]);
 
   const handleFriendRequestAction = async (requestId: number, action: 'accept' | 'reject') => {
+    const base = (import.meta.env.VITE_API_URL as string) || '';
+    const API_URL = `${base.replace(/\/+$/,'')}/api/social/friendships/${requestId}/${action}/`;
     const token = localStorage.getItem('authToken');
+    console.log('[Updates] handleFriendRequestAction ->', API_URL, 'token?', !!token);
     if (!token) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/social/friendships/${requestId}/${action}/`, {
+      const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (response.ok) fetchFriendRequests();
-      else console.error('Erro ao processar ação do pedido');
-    } catch (error) { console.error('Erro ao processar ação do pedido:', error); }
+      console.log('[Updates] handleFriendRequestAction status', response.status);
+      if (response.ok) {
+        // atualiza lista imediatamente
+        await fetchFriendRequests();
+      } else {
+        console.error('[Updates] Erro ao processar ação do pedido, body:', await response.text().catch(()=>null));
+      }
+    } catch (error) {
+      console.error('Erro ao processar ação do pedido:', error);
+    }
   };
 
   if (isLoading) {
