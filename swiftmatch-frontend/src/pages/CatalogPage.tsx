@@ -162,7 +162,7 @@ const CatalogPage: React.FC<CatalogPageProps> = () => {
 
   useEffect(() => {
     const fetchUserTheme = async () => {
-      const API_URL = '${import.meta.env.VITE_API_URL}/api/users/me/current-theme/';
+      const API_URL = `${import.meta.env.VITE_API_URL}/api/users/me/current-theme/`;
       const token = localStorage.getItem('authToken');
 
       if (!token) {
