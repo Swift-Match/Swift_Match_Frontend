@@ -30,16 +30,12 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-50">
                 <Routes>
                     
-                    {/* Rota 1: Login */}
                     <Route path="/login" element={<LoginPage />} />
                     
-                    {/* Rota 2: Registro */}
                     <Route path="/register" element={<RegisterPage />} />
                     
-                    {/* *** ROTA ADICIONADA: Seleção de Tema *** */}
                     <Route path="/theme-selection" element={<ThemeSelectionPage />} />
                     
-                    {/* Rota Raiz: Redireciona para /login */}
                     <Route path="/" element={<Navigate to="/login" replace />} /> 
 
                     <Route path="/album-ranking" element={<AlbumRankingPage />} />
@@ -80,7 +76,6 @@ const App: React.FC = () => {
 
                     <Route path="/matching" element={<MatchingPage />} />
 
-                    {/* 404 */}
                     <Route path="*" element={<h1>404 - Página Não Encontrada</h1>} />
                 </Routes>
             </div>

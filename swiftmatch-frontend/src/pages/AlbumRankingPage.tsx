@@ -168,7 +168,6 @@ const AlbumRankingPage: React.FC = () => {
       const fullUrl = `${API.defaults.baseURL?.replace(/\/$/,'')}/albums/all/`;
       console.log('[fetchAllAlbums] calling', fullUrl);
 
-      // usa API para manter baseURL/headers
       const res = await API.get('/albums/all/');
       console.log('[fetchAllAlbums] status', res.status);
       console.log('[fetchAllAlbums] response headers', res.headers);
@@ -189,7 +188,6 @@ const AlbumRankingPage: React.FC = () => {
         cover_url: a.cover_image_url ?? a.cover_url ?? a.cover ?? a.image ?? '',
       }));
     } catch (err: any) {
-      // logs exaustivos para saber exatamente que tipo de erro ocorreu
       console.error('Erro ao carregar álbuns (full error object):', err);
       if (err.isAxiosError) {
         console.error('axios error.toJSON():', err.toJSON ? err.toJSON() : null);
@@ -199,7 +197,6 @@ const AlbumRankingPage: React.FC = () => {
       } else {
         console.error('non-axios error message:', err?.message ?? err);
       }
-      // msg curta na UI
       setMessage('Erro ao carregar álbuns — veja console (logs detalhados).');
       return [];
     }
@@ -245,7 +242,6 @@ const AlbumRankingPage: React.FC = () => {
     try {
       await API.put('/rankings/albums/', { rankings: formatted });
       setMessage('Ranking salvo com sucesso!');
-      // --- AQUI ESTÁ A MUDANÇA: Redireciona para /catalog ---
       navigate('/catalog');
     } catch (err: any) {
       setMessage(`Erro ao salvar ranking: ${axios.isAxiosError(err) ? err.message : 'Erro desconhecido'}`);

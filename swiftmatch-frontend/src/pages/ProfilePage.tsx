@@ -22,7 +22,6 @@ interface UserProfile {
 
 interface FriendshipRequest { id: number; from_user: number; from_username: string; to_username: string; status: string; created_at: string; }
 
-/* tema map (copiado) */
 const themeColorMap = {
   TS: { dark: '#0C1A0C', light: '#A9CBAA' },
   FEARLESS: { dark: '#1E151A', light: '#FDDAA6' },
@@ -39,7 +38,6 @@ const themeColorMap = {
 } as const;
 type ThemeKey = keyof typeof themeColorMap;
 
-/* album images & routes (copiados) */
 const albumImageMap: Record<string, string> = {
   TS: 'TSFirstVersion.png', FEARLESS: 'FearlessFirstVersion.png', SPEAK_NOW: 'SpeakNowFirstVersion.png',
   RED: 'RedFirstVersion.png', '1989': '1989FirstVersion.png', REPUTATION: 'ReputationFirstVersion.png',
@@ -77,7 +75,6 @@ const ThemeIcon: React.FC<IconProps> = ({ svgName, color, size = 24 }) => (
   }} />
 );
 
-/* normalize helper */
 const normalize = (s?: string | null) => {
   if (!s) return '';
   return s
@@ -106,17 +103,14 @@ const ProfilePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<UserResult[]>([]);
 
-  // ranks for the viewed user
   const [albumsRankedViaAlbums, setAlbumsRankedViaAlbums] = useState<string[]>([]);
   const [albumsRankedViaTracks, setAlbumsRankedViaTracks] = useState<string[]>([]);
   const [combinedAlbums, setCombinedAlbums] = useState<string[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
 
-  // friend request state
   const [friendRequestStatus, setFriendRequestStatus] = useState<'idle' | 'loading' | 'sent' | 'accepted' | 'error'>('idle');
   const [friendRequestMessage, setFriendRequestMessage] = useState<string | null>(null);
 
-  // album title -> key map (same as Individual)
   const albumTitleToKey: Record<string, string> = {
     'taylor swift': 'TS', 'fearless': 'FEARLESS', 'speak now': 'SPEAK_NOW',
     'red': 'RED', '1989': '1989', 'reputation': 'REPUTATION',
@@ -126,14 +120,12 @@ const ProfilePage: React.FC = () => {
   };
   const normAlbumMap = Object.fromEntries(Object.entries(albumTitleToKey).map(([k, v]) => [normalize(k), v]));
 
-  // 🟢 CORREÇÃO 1: Mapeamento reverso para obter o título completo a partir da chave abreviada
   const albumKeyToTitle: Record<string, string> = Object.entries(albumTitleToKey).reduce((acc, [title, key]) => {
     acc[key] = title;
     return acc;
   }, {} as Record<string, string>);
 
 
-  // ---------- autocomplete fetch ----------
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
     const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${encodeURIComponent(term)}`;
@@ -146,7 +138,6 @@ const ProfilePage: React.FC = () => {
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); fetchUsers(e.target.value); };
   const handleResultClick = (id: number) => { navigate(`/profile/${id}`); setSearchTerm(''); setSearchResults([]); };
 
-  // ---------- helpers for images ----------
   const prefixIfRelative = (url?: string | null) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -172,7 +163,6 @@ const ProfilePage: React.FC = () => {
     return 'U';
   };
 
-  // ---------- helper: fetch album by key/title ----------
   const fetchAlbumByKey = async (albumKeyOrTitle: string, token?: string) => {
     try {
         const base = import.meta.env.VITE_API_URL;
@@ -193,7 +183,6 @@ const ProfilePage: React.FC = () => {
     };
 
 
-  // ---------- RankButton component (substituído para checar tracks antes de navegar) ----------
   interface RankButtonProps { albumKey: ThemeKey | 'ALBUM'; route: string; colors: typeof themeColorMap['TS']; }
   const RankButton: React.FC<RankButtonProps> = ({ albumKey, route, colors }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -203,11 +192,9 @@ const ProfilePage: React.FC = () => {
     const imageUrl = isHovered ? `/RankSecondButtonVersion/${secondFile}` : `/RankFirstButtonVersion/${firstFile}`;
 
     const handleClick = async () => {
-      // require target user (profile) id to be present
       if (!userId) { alert('Usuário alvo indefinido.'); return; }
       const token = localStorage.getItem('authToken') || undefined;
 
-      // ALBUM generic (matching de álbuns) — todos podem acessar
       if (albumKey === 'ALBUM') {
         const qs = `?targetUserId=${encodeURIComponent(String(userId))}&matchType=albums`;
         const state = { targetUserId: Number(userId), matchType: 'albums' };
@@ -215,11 +202,8 @@ const ProfilePage: React.FC = () => {
         return;
       }
 
-      // álbum específico: precisamos do albumId e verificar ranking de tracks do usuário logado
       setChecking(true);
       try {
-        // 1) localiza álbum (pode retornar null)
-        // 🟢 CORREÇÃO 2: Usa o mapa reverso para obter o título completo e correto do álbum
         const albumTitleToSearch = albumKeyToTitle[albumKey] || String(albumKey);
         const album = await fetchAlbumByKey(albumTitleToSearch, token);
         
@@ -230,7 +214,6 @@ const ProfilePage: React.FC = () => {
         const albumId = album.id;
         const albumTitle = album.title ?? String(albumKey);
 
-        // 2) checa se USUÁRIO LOGADO ranqueou tracks deste álbum
         const headers: any = { 'Content-Type': 'application/json' };
         if (token) headers.Authorization = `Bearer ${token}`;
         const tracksRes = await fetch(`${import.meta.env.VITE_API_URL}/api/rankings/tracks/${albumId}/`, {
@@ -251,7 +234,6 @@ const ProfilePage: React.FC = () => {
         const data = await tracksRes.json();
         const rankings = Array.isArray(data.rankings) ? data.rankings : [];
         if (rankings.length > 0) {
-          // permitido: navega para matching de tracks, passando infos
           const qs = `?targetUserId=${encodeURIComponent(String(userId))}&albumId=${encodeURIComponent(String(albumId))}&albumTitle=${encodeURIComponent(String(albumTitle))}&matchType=tracks`;
           const state = {
             targetUserId: Number(userId),
@@ -302,7 +284,6 @@ const ProfilePage: React.FC = () => {
     );
   };
 
-  // ---------- fetch theme of viewer (keeps same behavior) ----------
   useEffect(() => {
     const fetchUserTheme = async () => {
         const base = import.meta.env.VITE_API_URL;
@@ -322,7 +303,6 @@ const ProfilePage: React.FC = () => {
     }, []);
 
 
-  // ---------- fetch other user's profile ----------
   useEffect(() => {
     const fetchProfile = async () => {
       if (!userId) return;
@@ -343,7 +323,6 @@ const ProfilePage: React.FC = () => {
     fetchProfile();
   }, [userId]);
 
-  // ---------- fetch ranks for the other user ----------
   useEffect(() => {
     const fetchRankedTitles = async () => {
       if (!userId) return;
@@ -371,7 +350,6 @@ const ProfilePage: React.FC = () => {
     fetchRankedTitles();
   }, [userId]);
 
-  // ---------- friend request (POST) ----------
   const handleSendFriendRequest = async () => {
     if (!userId) return;
     setFriendRequestStatus('loading'); setFriendRequestMessage(null);
@@ -400,7 +378,6 @@ const ProfilePage: React.FC = () => {
   const coverUrl = pickCoverUrl(userProfile);
   const gradientDark = `linear-gradient(90deg, ${colors.dark}CC, ${colors.dark}77)`;
 
-  // ---------- derive albumKeysOrTitles exactly like IndividualProfilePage ----------
   let sourceAlbumTitles: string[] = [];
   if (albumsRankedViaTracks.length > 0) sourceAlbumTitles = Array.from(new Set(albumsRankedViaTracks));
   else if (albumsRankedViaAlbums.length > 0) sourceAlbumTitles = Array.from(new Set(albumsRankedViaAlbums));
@@ -415,13 +392,11 @@ const ProfilePage: React.FC = () => {
     albumKeysOrTitles = Array.from(new Set(albumKeysOrTitles));
   }
 
-  // ---------- albumLine (not required but kept consistent) ----------
   let albumLine: string;
   if (albumsRankedViaTracks.length > 0) albumLine = ['Albums', ...albumKeysOrTitles.filter(k => k !== 'ALBUM')].join(', ');
   else if (albumsRankedViaAlbums.length > 0) albumLine = 'Albums';
   else albumLine = 'Albums (nenhum album ranqueado)';
 
-  // ---------- render ----------
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box' }}>
       {/* SIDEBAR */}

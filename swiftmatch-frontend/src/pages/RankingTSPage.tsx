@@ -88,11 +88,9 @@ const RankingTSPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // refs para drag
   const dragItemIndex = useRef<number | null>(null);
   const dragOverItemIndex = useRef<number | null>(null);
 
-  // busca as faixas
   const fetchTracks = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -136,7 +134,6 @@ const RankingTSPage: React.FC = () => {
     fetchTracks();
   }, [fetchTracks]);
 
-  // reorder quando soltar
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const from = dragItemIndex.current;
@@ -164,7 +161,6 @@ const RankingTSPage: React.FC = () => {
     const crt = document.createElement('div');
     crt.style.width = '0px';
     crt.style.height = '0px';
-    // @ts-ignore
     e.dataTransfer.setDragImage(crt, 0, 0);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -179,7 +175,6 @@ const RankingTSPage: React.FC = () => {
     dragOverItemIndex.current = null;
   };
 
-  // salvar ranking
   const handleSaveRanking = async () => {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -188,7 +183,6 @@ const RankingTSPage: React.FC = () => {
         return;
     }
 
-    // 1. Mapeia o estado atual (tracks) para o formato esperado pelo Serializer
     const rankingsPayload = tracks.map((track, index) => ({
         track_id: track.id,
         position: index + 1,
@@ -219,7 +213,7 @@ const RankingTSPage: React.FC = () => {
         
         console.log('Ranking salvo com sucesso!', rankingsPayload);
         
-        navigate('/catalog'); // <-- CHAMADA PARA REDIRECIONAR
+        navigate('/catalog'); 
         
     } catch (err: any) {
         console.error('Erro ao salvar ranking:', err.message);
@@ -227,7 +221,6 @@ const RankingTSPage: React.FC = () => {
     }
 };
 
-  // layout vars
   const wrapperBg = TS_LIGHT;
   const fadeWidth = 120;
   const indicatorHeight = 120;
@@ -265,9 +258,9 @@ const RankingTSPage: React.FC = () => {
                   style={{
                     width: '120px',
                     height: '160px',
-                    position: 'relative', // <<< importante
+                    position: 'relative', 
                     display: 'flex',
-                    alignItems: 'flex-start', // alinha o conteúdo no topo
+                    alignItems: 'flex-start', 
                     justifyContent: 'space-between',
                     padding: '10px',
                     borderRadius: 10,

@@ -19,7 +19,6 @@ interface UserProfile {
   [key: string]: any;
 }
 
-/* tema map */
 const themeColorMap = {
   TS: { dark: '#0C1A0C', light: '#A9CBAA' },
   FEARLESS: { dark: '#1E151A', light: '#FDDAA6' },
@@ -36,9 +35,6 @@ const themeColorMap = {
 } as const;
 type ThemeKey = keyof typeof themeColorMap;
 
-// =========================================================================
-// NOVOS MAPAS DE IMAGENS E ROTAS (Copiados de CatalogPage)
-// =========================================================================
 const albumImageMap: Record<string, string> = {
   TS: 'TSFirstVersion.png',
   FEARLESS: 'FearlessFirstVersion.png',
@@ -71,7 +67,6 @@ const albumSecondImageMap: Record<string, string> = {
   ALBUM: 'AlbumsSecondVersion.png',
 };
 
-/* MAPA DE ROTAS PARA OS RANKS */
 const albumRouteMap: Record<string, string> = {
   SPEAK_NOW: '/speak-now',
   FEARLESS: '/fearless',
@@ -87,7 +82,6 @@ const albumRouteMap: Record<string, string> = {
   TTPD: '/ttpd',
   ALBUM: '/album-ranking'
 };
-// =========================================================================
 
 const sidebarItems = [
   { name: 'Home', svg: 'home.svg', path: '/catalog' },
@@ -106,7 +100,6 @@ const ThemeIcon: React.FC<IconProps> = ({ svgName, color, size = 24 }) => (
   }} />
 );
 
-/* LogoutButton: usa o SVG em public/Components/LogoutIcon.svg e coloriza pelo tema */
 interface LogoutButtonProps { color: string; size?: number; onClick?: () => void; }
 const LogoutButton: React.FC<LogoutButtonProps> = ({ color, size = 40, onClick }) => (
   <button
@@ -149,7 +142,6 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({ color, size = 40, onClick }
   </button>
 );
 
-/* normalize helper: remove diacritics/punct/extra spaces, toLowerCase */
 const normalize = (s?: string | null) => {
   if (!s) return '';
   return s
@@ -175,13 +167,11 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   const [searchResults, setSearchResults] = useState<UserResult[]>([]);
   const navigate = useNavigate();
 
-  // --- RANKS (new API)
   const [albumsRankedViaAlbums, setAlbumsRankedViaAlbums] = useState<string[]>([]);
   const [albumsRankedViaTracks, setAlbumsRankedViaTracks] = useState<string[]>([]);
   const [combinedAlbums, setCombinedAlbums] = useState<string[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
 
-  // album title -> key map (your keys)
   const albumTitleToKey: Record<string, string> = {
     'taylor swift': 'TS',
     'fearless': 'FEARLESS',
@@ -198,7 +188,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   };
   const normAlbumMap = Object.fromEntries(Object.entries(albumTitleToKey).map(([k, v]) => [normalize(k), v]));
 
-  // ---------- autocomplete fetch ----------
   const fetchUsers = useCallback(async (term: string) => {
     if (term.trim() === '') { setSearchResults([]); return; }
     const API_URL = `${import.meta.env.VITE_API_URL}/api/social/users/search/?query=${encodeURIComponent(term)}`;
@@ -212,7 +201,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); fetchUsers(e.target.value); };
   const handleResultClick = (userId: number) => { navigate(`/profile/${userId}`); setSearchTerm(''); setSearchResults([]); };
 
-  // ---------- fetch theme/profile ----------
   useEffect(() => {
     const fetchUserTheme = async () => {
       const API_URL = `${import.meta.env.VITE_API_URL}/api/users/me/current-theme/`;
@@ -281,7 +269,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     fetchRankedTitles();
   }, []);
 
-  // ---------- images helpers ----------
   const prefixIfRelative = (url?: string | null) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -307,7 +294,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     return 'U';
   };
 
-  // --- NOVO COMPONENTE DE BOTÃO DE RANK (ESTILO CATÁLOGO APLICADO) ---
   interface RankButtonProps {
     albumKey: ThemeKey | 'ALBUM';
     route: string;
@@ -328,23 +314,19 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
       <button
         key={albumKey}
         style={{
-          // ESTILOS DE CATÁLOGO APLICADOS
           flex: '0 0 calc(33.333% - 8px)',
-          padding: 80, // Isso define o tamanho do botão
+          padding: 80, 
           
-          // Estilos base
           borderRadius: 8,
-          border: 'none', // Removido a borda do tema, usaremos a borda das imagens
+          border: 'none',
           cursor: 'pointer',
-          backgroundColor: '#FFF9F9', // Cor de fundo neutra
+          backgroundColor: '#FFF9F9', 
           color: '#FFF9F9',
           fontWeight: 600,
 
-          // Estilos de imagem
           backgroundImage: `url(${imageUrl})`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
-          // Zoom no hover
           backgroundSize: isHovered ? '120%' : 'contain', 
           transition: 'background-size 180ms ease',
         }}
@@ -360,9 +342,7 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
       </button>
     );
   };
-  // ----------------------------------------
 
-  // ---------- logout handler (antes do return) ----------
   const handleLogout = async () => {
     const token = localStorage.getItem('authToken');
     try {
@@ -387,31 +367,24 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
   const coverUrl = pickCoverUrl(userProfile);
   const gradientDark = `linear-gradient(90deg, ${colors.dark}CC, ${colors.dark}77)`;
 
-  // ---------- derive final unique album list (CORRIGIDO) ----------
   let sourceAlbumTitles: string[] = [];
 
-  // 1. Define a fonte dos títulos: Prioriza ranks de tracks, senão usa ranks de albums
   if (albumsRankedViaTracks.length > 0) {
     sourceAlbumTitles = Array.from(new Set(albumsRankedViaTracks));
   } else if (albumsRankedViaAlbums.length > 0) {
     sourceAlbumTitles = Array.from(new Set(albumsRankedViaAlbums));
   }
 
-  // 2. Mapeia os títulos da fonte para as chaves de álbum (ex: 'Taylor Swift' -> 'TS')
-  // Filtra títulos que não mapearam para uma ThemeKey conhecida, já que não temos imagens para eles.
   let albumKeysOrTitles = Array.from(new Set(sourceAlbumTitles.map(title => {
     const nk = normalize(title);
     return normAlbumMap[nk];
-  }).filter(Boolean))) as (ThemeKey | 'ALBUM')[]; // Garante a tipagem ThemeKey
+  }).filter(Boolean))) as (ThemeKey | 'ALBUM')[];
 
-  // 3. Garante que 'ALBUM' apareça se houver qualquer ranking, e lida com a lista única de chaves.
   if (albumsRankedViaTracks.length > 0 || albumsRankedViaAlbums.length > 0) {
-      // Adiciona 'ALBUM' (rank geral) e remove duplicatas no final
       albumKeysOrTitles.unshift('ALBUM');
       albumKeysOrTitles = Array.from(new Set(albumKeysOrTitles));
   }
 
-  // 4. (Referência) Constrói o texto 'albumLine'
   let albumLine: string;
   if (albumsRankedViaTracks.length > 0) {
     albumLine = ['Albums', ...albumKeysOrTitles.filter(key => key !== 'ALBUM')].join(', ');
@@ -421,7 +394,6 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
     albumLine = 'Albums (nenhum album ranqueado)';
   }
 
-  // ---------- render ----------
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box' }}>
       {/* SIDEBAR */}
@@ -516,13 +488,10 @@ const IndividualProfilePage: React.FC<IndividualProfilePageProps> = () => {
           ) : (
             <>
               {albumKeysOrTitles.length > 0 ? (
-                // Use a div com flexWrap e gap para o layout dos botões
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   {albumKeysOrTitles.map((albumKeyOrTitle) => {
-                    // Trata o caso especial 'Albums' para ranking geral.
                     const keyToUse = albumKeyOrTitle as ThemeKey | 'ALBUM';
 
-                    // A rota deve ser do ranking
                     const route = albumRouteMap[keyToUse] || '/catalog';
                       
                     return (

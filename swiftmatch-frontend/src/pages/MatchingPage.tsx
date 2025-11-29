@@ -113,10 +113,6 @@ const publicCoverUrl = (filename: string | undefined) => {
   return `/AlbumCovers/${filename}`;
 };
 
-/**
- * AlbumCoverBox: fixed alignment for single vs double cover.
- * label and extraText are rendered INSIDE the box.
- */
 const AlbumCoverBox: React.FC<{
   albumTitle?: string | null;
   normalizedCode?: string;
@@ -148,7 +144,6 @@ const AlbumCoverBox: React.FC<{
   const boxStyle = { ...boxBase, ...boxSize };
 
   const imageContainerStyle: React.CSSProperties = {
-    // Mantém o tamanho para criar o espaço necessário para o efeito 3D
     width: isDouble ? 240 : 180,
     height: isDouble ? 240 : 180,
     position: 'relative',
@@ -163,7 +158,6 @@ const AlbumCoverBox: React.FC<{
     position: 'absolute' as const,
     width: isDouble ? 190 : 160,
     height: isDouble ? 190 : 160,
-    // Centraliza e aplica o deslocamento para trás
     top: '50%',
     left: '50%',
     borderRadius: 12,
@@ -171,23 +165,19 @@ const AlbumCoverBox: React.FC<{
     filter: 'brightness(0.98) contrast(0.96)',
     boxShadow: '0 10px 26px rgba(0,0,0,0.5)',
     zIndex: 1,
-    // CORREÇÃO: Usa translate para deslocar e centralizar o conjunto. Move a capa de trás para o quadrante "baixo-direita".
     transform: isDouble ? 'translate(-40%, -40%)' : 'translate(-50%, -50%)',
   };
 
-  // frontStyle: different offsets depending on single/double
   const frontStyle: React.CSSProperties = {
     position: 'absolute' as const,
-    width: isDouble ? 190 : 170, // Ajusta o tamanho da capa da frente
+    width: isDouble ? 190 : 170, 
     height: isDouble ? 190 : 170,
-    // Centraliza e aplica o deslocamento para frente
     top: '50%',
     left: '50%',
     borderRadius: 12,
     objectFit: 'cover' as const,
     boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
     zIndex: 2,
-    // CORREÇÃO: Usa translate para deslocar e centralizar o conjunto. Move a capa da frente para o quadrante "cima-esquerda".
     transform: isDouble ? 'translate(-60%, -60%)' : 'translate(-50%, -50%)',
   };
 
@@ -207,7 +197,6 @@ const AlbumCoverBox: React.FC<{
       <div style={imageContainerStyle}>
         {isDouble && originalUrl && <img src={originalUrl} alt={`${albumTitle || ''} original`} style={originalStyle} />}
         {frontUrl ? (
-          // CORREÇÃO: Aplica frontStyle diretamente, que já contém a lógica de single vs double
           <img src={frontUrl} alt={`${albumTitle || ''} front`} style={frontStyle} />
         ) : (
           <div style={{ width: singleStyle.width, height: singleStyle.height, borderRadius: singleStyle.borderRadius, background: '#222' }} />
@@ -240,7 +229,6 @@ const MatchingAnalysisDisplay: React.FC<MatchingAnalysisProps> = ({ analysis, ty
     { label: "Great Consensus", key: `most_concordant_${idPrefix}_id`, extraKey: 'min_position_difference' },
   ];
 
-  // helper para transformar extraKey em texto explicativo
   const explainExtra = (extraKey: string | undefined, value: any) => {
     if (value === null || value === undefined) return null;
     if (extraKey === 'max_position_difference') return `Max position difference: ${value}`;
@@ -277,7 +265,6 @@ const MatchingAnalysisDisplay: React.FC<MatchingAnalysisProps> = ({ analysis, ty
           );
         }
 
-        // albums: album box with proper extra text inside
         return (
           <div key={item.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <AlbumCoverBox albumTitle={title} normalizedCode={normalized} label={item.label} extraText={extraText} colors={colors} />

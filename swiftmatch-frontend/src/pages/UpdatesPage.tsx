@@ -151,7 +151,6 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
       console.log('[Updates] fetchFriendRequests status', response.status);
       if (response.ok) {
         const data = await response.json().catch(() => []);
-        // normaliza formatos comuns: array direto ou { results: [] }
         const arr = Array.isArray(data) ? data : (data?.results ?? []);
         setFriendRequests(Array.isArray(arr) ? arr : []);
       } else {
@@ -165,7 +164,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
   }, []);
 
   useEffect(() => {
-    fetchFriendRequests(); // primeira chamada imediata
+    fetchFriendRequests(); 
     const iv = setInterval(() => { fetchFriendRequests(); }, 10000);
     return () => clearInterval(iv);
   }, [fetchFriendRequests]);
@@ -183,7 +182,6 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
       });
       console.log('[Updates] handleFriendRequestAction status', response.status);
       if (response.ok) {
-        // atualiza lista imediatamente
         await fetchFriendRequests();
       } else {
         console.error('[Updates] Erro ao processar ação do pedido, body:', await response.text().catch(()=>null));
@@ -204,7 +202,6 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
   const colors = themeColorMap[userTheme];
 
   return (
-    // FORÇA a viewport inteira com width/height em vw/vh e evita contêineres pais limitando largura
     <div style={{ display: 'flex', height: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box' }}>
       {/* SIDEBAR (fixa 150px) */}
       <div style={{
@@ -246,7 +243,7 @@ const UpdatesPage: React.FC<UpdatesPage> = () => {
       {/* CONTEÚDO — ocupa todo o espaço restante */}
       <div style={{
         flex: '1 1 auto',
-        minWidth: 0,               // ESSENCIAL para conteúdo flex ocupar corretamente
+        minWidth: 0,             
         backgroundColor: colors.light,
         padding: 48,
         boxSizing: 'border-box',

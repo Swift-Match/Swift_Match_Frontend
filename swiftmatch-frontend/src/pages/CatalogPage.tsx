@@ -1,4 +1,3 @@
-// src/pages/CatalogPage.tsx
 import React, { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -89,7 +88,6 @@ const albumSecondImageMap: Record<string, string> = {
   ALBUM: 'AlbumsSecondVersion.png',
 };
 
-/* <-- MAPA DE ROTAS PARA OS ALBUNS (fornecidas por você) */
 const albumRouteMap: Record<string, string> = {
   SPEAK_NOW: '/speak-now',
   FEARLESS: '/fearless',
@@ -104,7 +102,6 @@ const albumRouteMap: Record<string, string> = {
   MIDNIGHTS: '/midnights',
   TTPD: '/ttpd',
   ALBUM: '/album-ranking'
-  // ALBUM or others default handled below
 };
 
 const CatalogPage: React.FC<CatalogPageProps> = () => {
@@ -396,7 +393,6 @@ const CatalogPage: React.FC<CatalogPageProps> = () => {
             const isHovered = hoveredAlbum === album;
             const imageUrl = isHovered ? `/RankSecondButtonVersion/${secondFile}` : `/RankFirstButtonVersion/${firstFile}`;
 
-            // decide a rota (se não existir, volta pra /catalog)
             const route = albumRouteMap[album] || '/catalog';
 
             return (

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/axiosConfig';
 
-// countries...
 const countries = [
   { code: 'US', name: 'United States' },
   { code: 'BR', name: 'Brazil' },
@@ -17,8 +16,7 @@ const countries = [
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // ====== ADJUST THESE VALUES TO MOVE / RESIZE THE SIDE IMAGES ======
-  const LEFT_IMG_SRC = '/Components/LeftRegisterWall.png';   // change if needed
+  const LEFT_IMG_SRC = '/Components/LeftRegisterWall.png'; 
   const RIGHT_IMG_SRC = '/Components/RightRegisterWall.png';
   const LEFT_IMG_WIDTH = '500px';
   const LEFT_IMG_HEIGHT = '92vh';
@@ -28,9 +26,7 @@ const RegisterPage: React.FC = () => {
   const LEFT_IMG_OFFSET_Y = 30;
   const RIGHT_IMG_OFFSET_X = -50;
   const RIGHT_IMG_OFFSET_Y = 30;
-  // =================================================================
 
-  // center container sizing (also adjustable)
   const CENTER_WIDTH = '520px';
   const CENTER_PADDING = 36;
   const OUTLINE_PADDING = 20;
@@ -131,7 +127,7 @@ const RegisterPage: React.FC = () => {
           maxWidth: 'calc(100% - 48px)',
           background: '#ffffff',
           height: CENTER_HEIGHT, 
-          borderRadius: 0, // sharp corners
+          borderRadius: 0, 
           padding: CENTER_PADDING,
           boxSizing: 'border-box',
           boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
@@ -144,7 +140,7 @@ const RegisterPage: React.FC = () => {
             border: '2px solid #000',
             padding: OUTLINE_PADDING,
             boxSizing: 'border-box',
-            borderRadius: 0, // sharp corners
+            borderRadius: 0, 
             display: 'flex',
             flexDirection: 'column',
             gap: 14,

@@ -1,11 +1,10 @@
-// src/pages/AnalyticsPage.tsx
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 interface CountryRanking {
   id: number;
-  country_name: string; // ex: "BR"
+  country_name: string; 
   user_count: number;
   consensus_album?: number | null;
   consensus_album_title?: string | null;
@@ -87,7 +86,6 @@ const ThemeIcon: React.FC<{ svgName: string; color: string; size?: number }> = (
 const getAlbumRankings = (analysisData: any): AlbumStat[] => {
   if (!analysisData) return [];
 
-  // analysisData is expected to contain album-id keyed objects plus other keys like 'summary'
   return Object.entries(analysisData)
     .filter(([key]) => !isNaN(Number(key)))
     .map(([albumId, data]) => ({
@@ -106,7 +104,6 @@ const AnalyticsPage: React.FC = () => {
   const [selected, setSelected] = useState<CountryRanking | null>(null);
   const navigate = useNavigate();
 
-  // Map interaction state
   const INITIAL_ZOOM = 4.0;
   const [zoomLevel, setZoomLevel] = useState(INITIAL_ZOOM);
   const [panX, setPanX] = useState(0);
@@ -135,7 +132,6 @@ const AnalyticsPage: React.FC = () => {
         setCountries(payload);
       } catch (err: any) {
         console.error('Error fetching global rankings:', err);
-        // logs extras
         if (err.response) {
           console.error('[Analytics] err.response.status', err.response.status);
           console.error('[Analytics] err.response.data', err.response.data);

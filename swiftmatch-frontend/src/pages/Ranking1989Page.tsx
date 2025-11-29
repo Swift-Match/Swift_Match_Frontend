@@ -1,9 +1,7 @@
-// src/pages/RankingSpeakNowPage.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// --- CONFIGURAÇÕES DE LAYOUT (MANTIDAS) ---
-const a1989_ALBUM_ID = 5; // ajuste se necessário
+const a1989_ALBUM_ID = 5; 
 const API_BASE_URL = import.meta.env.VITE_API_URL + '/api';
 
 const COMPONENT_MAX_WIDTH = 800;
@@ -11,11 +9,9 @@ const HEADER_HEIGHT = 80;
 const GAP_PX = 50;
 const ALBUM_SCALE = 1.4;
 
-// Cores do Tema Speak Now
-const a1989_DARK = '#034A62';   // dark
-const a1989_LIGHT = '#D1F3FF';  // light
+const a1989_DARK = '#034A62';   
+const a1989_LIGHT = '#D1F3FF';  
 
-// Tipagem para as músicas
 interface Track {
   id: number;
   title: string;
@@ -23,7 +19,6 @@ interface Track {
   album: number;
 }
 
-// --- Componente de botão customizável ---
 interface ButtonCustomProps {
   width?: number | string;
   height?: number | string;
@@ -92,11 +87,9 @@ const Ranking1989Page: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // refs para drag
   const dragItemIndex = useRef<number | null>(null);
   const dragOverItemIndex = useRef<number | null>(null);
 
-  // busca as faixas
   const fetchTracks = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -140,7 +133,6 @@ const Ranking1989Page: React.FC = () => {
     fetchTracks();
   }, [fetchTracks]);
 
-  // reorder quando soltar
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const from = dragItemIndex.current;
@@ -183,7 +175,6 @@ const Ranking1989Page: React.FC = () => {
     dragOverItemIndex.current = null;
   };
 
-  // salvar ranking
   const handleSaveRanking = async () => {
     const token = localStorage.getItem('authToken');
     if (!token) {
@@ -192,7 +183,6 @@ const Ranking1989Page: React.FC = () => {
         return;
     }
 
-    // 1. Mapeia o estado atual (tracks) para o formato esperado pelo Serializer
     const rankingsPayload = tracks.map((track, index) => ({
         track_id: track.id,
         position: index + 1,
@@ -223,7 +213,7 @@ const Ranking1989Page: React.FC = () => {
         
         console.log('Ranking salvo com sucesso!', rankingsPayload);
         
-        navigate('/catalog'); // <-- CHAMADA PARA REDIRECIONAR
+        navigate('/catalog'); 
         
     } catch (err: any) {
         console.error('Erro ao salvar ranking:', err.message);
@@ -231,7 +221,6 @@ const Ranking1989Page: React.FC = () => {
     }
 };
 
-  // layout vars
   const wrapperBg = a1989_LIGHT;
   const fadeWidth = 120;
   const indicatorHeight = 120;
@@ -269,9 +258,9 @@ const Ranking1989Page: React.FC = () => {
                   style={{
                     width: '120px',
                     height: '160px',
-                    position: 'relative', // <<< importante
+                    position: 'relative', 
                     display: 'flex',
-                    alignItems: 'flex-start', // alinha o conteúdo no topo
+                    alignItems: 'flex-start', 
                     justifyContent: 'space-between',
                     padding: '10px',
                     borderRadius: 10,
@@ -307,7 +296,7 @@ const Ranking1989Page: React.FC = () => {
                       fontSize: 16,
                       color: a1989_LIGHT,
                       fontWeight: 600,
-                      marginTop: 10,    // afasta do topo
+                      marginTop: 10,    
                       marginLeft: 0, 
                       wordBreak: 'break-word',
                       whiteSpace: 'normal'
@@ -365,9 +354,9 @@ const Ranking1989Page: React.FC = () => {
       {/* Botão Salvar Ranking */}
       <div style={{ width: '100%', margin: '8px auto 56px', display: 'flex', justifyContent: 'flex-end', padding: '0 20px', boxSizing: 'border-box', position: 'relative' }}>
         <ButtonCustom
-          width={220}       // largura livre
-          height={60}       // altura livre
-          borderRadius={30} // arredondamento livre
+          width={220}       
+          height={60}       
+          borderRadius={30} 
           onClick={handleSaveRanking}
         >
           Save Ranking

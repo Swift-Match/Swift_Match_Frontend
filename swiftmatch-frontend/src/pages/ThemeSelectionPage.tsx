@@ -40,33 +40,27 @@ const ARROW_RIGHT_IMAGE = '/Components/right_arrow.png';
 
 interface ThemeOption { key: string; label: string }
 
-// layout/config
 const COMPONENT_MAX_WIDTH = 800;
 const HEADER_HEIGHT = 80;
-const VISIBLE_COUNT = 5; // fully visible slots
+const VISIBLE_COUNT = 5;
 const GAP_PX = 50;
-// offsets -3..3 => 7 rendered (two partials)
 const VISIBLE_OFFSETS = [-3, -2, -1, 0, 1, 2, 3];
 
-// scale multiplier for album visuals
 const ALBUM_SCALE = 1.4;
 
 const LogoSVG: React.FC<{ color: string }> = ({ color }) => {
     return (
         <svg 
-            // Estes atributos são os originais do seu SVG:
             width="299" 
             height="75" 
             viewBox="0 0 299 75" 
-            fill="none" // Mantenha fill="none" no SVG principal se o path preencher tudo
+            fill="none" 
             xmlns="http://www.w3.org/2000/svg"
             
-            // Aqui aplicamos a cor dinâmica ao estilo do elemento SVG:
             style={{ 
-                height: 40, // Mantive o height 30px, como no seu código original
+                height: 40, 
                 width: 'auto', 
                 transition: 'fill 0.3s ease-in-out',
-                // A cor do 'fill' é definida pela prop 'color'
                 fill: color, 
             }}
         >
@@ -116,7 +110,6 @@ const ThemeSelectionPage: React.FC = () => {
     fetch();
   }, [isAuthSetup]);
 
-  // Calculate item width so exactly 5 full items fit the wrapper
   const recalc = useCallback(() => {
     const w = wrapperRef.current?.clientWidth ?? COMPONENT_MAX_WIDTH;
     const totalGaps = GAP_PX * (VISIBLE_COUNT - 1);
@@ -128,16 +121,15 @@ const ThemeSelectionPage: React.FC = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
         recalc();
-    }, 50); // Um pequeno atraso de 50ms é geralmente o suficiente para leituras corretas do DOM
+    }, 50); 
 
     window.addEventListener('resize', recalc);
     return () => {
         window.removeEventListener('resize', recalc);
-        clearTimeout(timeoutId); // Limpa o timeout ao desmontar
+        clearTimeout(timeoutId); 
     };
   }, [recalc, themes.length]);
 
-  // circular helpers
   const mod = (n: number, m: number) => ((n % m) + m) % m;
   const getIndexOffset = (center: number, offset: number) => mod(center + offset, themes.length || 1);
 
@@ -168,9 +160,7 @@ const ThemeSelectionPage: React.FC = () => {
   const fadeWidth = Math.max(40, Math.round((itemPx * ALBUM_SCALE) / 1.6));
   const rowShift = -(itemPx + GAP_PX);
 
-  // EXTRA VERTICAL SPACE: calcula um padding vertical que acomode o scale sem aumentar cover size.
-  // deixei um padding mínimo e um extra baseado no scale para evitar corte quando o visual é maior.
-  const extraVertical = Math.round((indicatorHeight * (ALBUM_SCALE - 1)) + 16); // 16px extra cushion
+  const extraVertical = Math.round((indicatorHeight * (ALBUM_SCALE - 1)) + 16); 
   
   return (
     <div style={{ width: '100vw', minHeight: '100vh', background: wrapperBg, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -202,9 +192,9 @@ const ThemeSelectionPage: React.FC = () => {
             <div style={{ position: 'relative', width: '100%', height: 120 /* ou o quanto quiser */ }}>
         <h2 style={{ 
             position: 'absolute', 
-            top: 30,       // distância do topo
-            left: '12%',   // centralizado horizontalmente
-            transform: 'translateX(-50%)', // ajusta centralização
+            top: 30,     
+            left: '12%',   
+            transform: 'translateX(-50%)', 
             fontSize: 75, 
             fontWeight: 45, 
             color: themeColorMap[currentThemeKey].dark 
@@ -213,7 +203,7 @@ const ThemeSelectionPage: React.FC = () => {
         </h2>
         <p style={{ 
             position: 'absolute',
-            top: 150,      // abaixo do h2
+            top: 150,     
             left: '29%',
             transform: 'translateX(-50%)',
             fontSize: 45,
@@ -230,7 +220,7 @@ const ThemeSelectionPage: React.FC = () => {
           <img 
             src={ARROW_LEFT_IMAGE} 
             alt="Seta para a esquerda" 
-            style={{ width: 80, height: 80 }} // Ajuste o tamanho da imagem conforme necessário
+            style={{ width: 80, height: 80 }} 
           />
         </button>
 
@@ -244,7 +234,6 @@ const ThemeSelectionPage: React.FC = () => {
             overflow: 'hidden',
             borderRadius: 8,
             boxSizing: 'border-box',
-            // aqui: maior padding vertical para não cortar o álbum escalado
             paddingTop: extraVertical + 6,
             paddingBottom: extraVertical + 6,
           }}
@@ -277,15 +266,12 @@ const ThemeSelectionPage: React.FC = () => {
                     backgroundImage: `url(${themeImages[theme.key] || themeImages['TS']})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    // SOMBRA MUITO MAIS SUAVE: central tem leve elevação, laterais quase nada
-                    boxShadow: 'none', // laterais: quase imperceptível
+                    boxShadow: 'none', 
                     transform: `translateY(${translateY}) scale(${visualScale})`,
                     transition: 'transform 260ms cubic-bezier(.2,.9,.3,1), opacity 260ms, box-shadow 260ms',
                     opacity,
                     zIndex,
-                    // REMOVI BORDA DOS LATERAIS; central tem borda fina só se precisar
                     border: dist === 0 ? `1px solid ${themeColorMap[theme.key].dark}` : 'none',
-                    // evita o "contorno branco" por fundo do label
                     backgroundClip: 'padding-box',
                     display: 'flex',
                     alignItems: 'flex-end',
@@ -306,7 +292,7 @@ const ThemeSelectionPage: React.FC = () => {
           <img 
             src={ARROW_RIGHT_IMAGE} 
             alt="Seta para a direita" 
-            style={{ width: 80, height: 80 }} // Ajuste o tamanho da imagem conforme necessário
+            style={{ width: 80, height: 80 }} 
           />
         </button>
       </div>
